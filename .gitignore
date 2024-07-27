@@ -22,3 +22,4 @@ go.work
 go.work.sum
 .air.toml
 tmp
+.env

@@ -1,6 +1,7 @@
 package responses
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -17,4 +18,8 @@ func ErrorResponse(c *gin.Context, code int, mes string) {
 		"details":   mes,
 		"timestamp": currentTime.Format(time.RFC3339),
 	})
+}
+
+func NotAllowed(c *gin.Context) {
+	ErrorResponse(c, http.StatusMethodNotAllowed, fmt.Sprintf("[%s] Method Not Allowed", c.Request.Method))
 }

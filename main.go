@@ -1,10 +1,25 @@
 package main
 
-import "immodi/startup/handlers"
+import (
+	"immodi/startup/handlers"
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+)
 
 func main() {
 	r := handlers.MakeGinEngine()
-	println("Currently Listening on http://localhost:8080....")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
 
-	r.Run()
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	println("Currently Listening on http://localhost:8080....")
+	r.Run(":" + port)
 }
