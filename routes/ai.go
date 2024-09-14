@@ -1,4 +1,4 @@
-package ai
+package routes
 
 import (
 	"bytes"
@@ -20,7 +20,7 @@ type GroqResponse struct {
 	} `json:"choices"`
 }
 
-func AiResponse(message string) (string, error) {
+func GetAiResponse(message string) (string, error) {
 	url := "https://api.groq.com/openai/v1/chat/completions"
 	err := godotenv.Load()
 	if err != nil {

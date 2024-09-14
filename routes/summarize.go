@@ -1,7 +1,8 @@
 package routes
 
 import (
-	"immodi/startup/ai"
+	"fmt"
+	"immodi/startup/lib"
 	"immodi/startup/responses"
 	"net/http"
 
@@ -19,14 +20,22 @@ func Summarize(c *gin.Context) {
 		responses.ErrorResponse(c, http.StatusBadRequest, "the field called 'message' is nonexistent")
 		return
 	}
-	response, err := ai.AiResponse(request.Message)
+	response, err := GetAiResponse(request.Message)
 
 	if err != nil {
 		responses.ErrorResponse(c, http.StatusInternalServerError, "Couldn't contact AI model, please try again later")
 		return
 	}
 
+	err = lib.WriteResponseHTML(response)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	lib.ParsePdfFile("data.html")
+
 	c.JSON(http.StatusAccepted, gin.H{
-		"summary": response,
+		"response": response,
 	})
 }
