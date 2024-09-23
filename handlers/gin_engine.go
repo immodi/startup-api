@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"immodi/startup/middlewares"
 	"immodi/startup/routes"
 
 	"github.com/gin-gonic/gin"
@@ -8,6 +9,7 @@ import (
 
 func MakeGinEngine() *gin.Engine {
 	r := gin.Default()
+	r.Use(middlewares.CORSMiddleware())
 
 	registerRoutes(r)
 

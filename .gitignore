@@ -23,3 +23,6 @@ go.work.sum
 .air.toml
 tmp
 .env
+
+data.html
+data.pdf
