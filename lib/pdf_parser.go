@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"os"
-
-	"github.com/MhmoudGit/html2pdf"
 )
 
 type Data struct{}
@@ -28,7 +26,7 @@ func ParsePdfFile(htmlFileName string) {
 	}
 
 	// create a pdf generator
-	g := html2pdf.Generator[any]{
+	g := Generator[any]{
 		OutputPath:     tempDir,
 		FinalPdf:       mergedPdf,
 		Template:       template,

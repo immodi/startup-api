@@ -13,7 +13,7 @@ type MessageRequest struct {
 	Message string `json:"message" binding:"required"`
 }
 
-func Summarize(c *gin.Context) {
+func Generate(c *gin.Context) {
 	var request MessageRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -35,7 +35,9 @@ func Summarize(c *gin.Context) {
 
 	lib.ParsePdfFile("data.html")
 
-	c.JSON(http.StatusAccepted, gin.H{
-		"response": response,
-	})
+	// c.JSON(http.StatusAccepted, gin.H{
+	// 	"response": response,
+	// })
+
+	c.FileAttachment("data.pdf", "data.pdf")
 }

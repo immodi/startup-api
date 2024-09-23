@@ -15,7 +15,7 @@ func MakeGinEngine() *gin.Engine {
 }
 
 func registerRoutes(r *gin.Engine) *gin.Engine {
-	r.POST("/", routes.Summarize)
+	r.POST("/", routes.Generate)
 
 	return r
 }

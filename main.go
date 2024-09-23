@@ -22,5 +22,4 @@ func main() {
 
 	println("Currently Listening on http://localhost:8080....")
 	r.Run(":" + port)
-
 }

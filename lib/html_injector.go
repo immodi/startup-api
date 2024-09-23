@@ -3,6 +3,8 @@ package lib
 import (
 	"html/template"
 	"os"
+
+	"github.com/russross/blackfriday/v2"
 )
 
 type Tag struct {
@@ -12,7 +14,7 @@ type Tag struct {
 }
 
 func WriteResponseHTML(htmlData string) error {
-	htmlData = SanatizeHtml(htmlData)
+	htmlData = ConvertMarkdownToHTML(htmlData)
 
 	templateHtml, err := ReadHtmlFileData("template.html")
 	if err != nil {
@@ -82,33 +84,10 @@ func SanatizeHtml(badHtml string) string {
 	return badHtml
 }
 
-func badHtml() string {
-	return `
-	<div>
-		<h1>Dark Souls: A Report</h1>
-		<p>Developed by FromSoftware, Dark Souls is an action role-playing game that has garnered a cult following since its release in 2011. The game is known for its challenging gameplay, Gothic atmosphere, and interconnected world design.</p>
-		<h2>Gameplay</h2>
-		<ul>
-			<li>Explore a vast, interconnected world featuring diverse environments, from dark forests to cursed cities.</li>
-			<li>Fight against a variety of fearsome enemies, from giant spiders to undead warriors.</li>
-			<li>Master a deep combat system that rewards strategy and skill.</li>
-			<li>Level up and upgrade your character's abilities and equipment to overcome the challenges that lie ahead.</li>
-		</ul>
-		<h2 Story</h2>
-		<p>In Dark Souls, you play as a cursed undead character who is tasked with reversing the spread of darkness in the world. The game's story is told through subtle hints and clues, rather than explicit narrative.</p>
-		<ul>
-			<li>Uncover the mysteries of the world by exploring hidden areas and speaking with NPCs.</li>
-			<li>Make choices that impact the world and its inhabitants.</li>
-			<li>Experience a story that is as much about the characters' own struggles as it is about the fate of the world.</li>
-		</ul>
-		<h2 Reception</h2>
-		<p>Dark Souls has received widespread critical acclaim for its challenging gameplay, atmospheric world, and deep storytelling.</p>
-		<ul>
-			<li>The game has a Metacritic score of 89% on PC, 88% on PlayStation 3, and 87% on Xbox 360.</li>
-			<li>Dark Souls has won numerous awards, including Game of the Year at the 2011 Golden Joystick Awards.</li>
-			<li>A community of dedicated fans has sprung up around the game, with many creating their own mods, art, and fiction inspired by the game.</li>
-		</ul>
-	</div`
+func ConvertMarkdownToHTML(markdown string) string {
+	// Convert Markdown to HTML
+	html := blackfriday.Run([]byte(markdown))
+	return string(html)
 }
 
 func getTag(refString *string, index int, tag string) (string, int, int) {
@@ -136,6 +115,7 @@ func getTagLength(tagRune rune) int {
 		'p': 1,
 		'l': 2,
 		'd': 3,
+		's': 7,
 	}
 
 	// Lookup the value in the map
@@ -157,17 +137,4 @@ func insertAtIndex(original string, index int, newContent rune) string {
 
 	// Concatenate the parts with the new content in between
 	return before + string(newContent) + after
-}
-
-func replaceChar(s string, index int, newChar rune) string {
-	if index < 0 || index >= len(s) {
-		return s // index out of bounds
-	}
-
-	// Convert the string to a slice of runes
-	runes := []rune(s)
-	// Replace the character at the given index
-	runes[index] = newChar
-	// Convert the rune slice back to a string
-	return string(runes)
 }
