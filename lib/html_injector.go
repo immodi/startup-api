@@ -3,6 +3,7 @@ package lib
 import (
 	"html/template"
 	"os"
+	"strings"
 
 	"github.com/russross/blackfriday/v2"
 )
@@ -13,10 +14,10 @@ type Tag struct {
 	TagLength int
 }
 
-func WriteResponseHTML(htmlData string) error {
-	htmlData = ConvertMarkdownToHTML(htmlData)
+func WriteResponseHTML(htmlData string, templatePath string) error {
+	htmlData = RemoveTrailingFreeText(htmlData)
 
-	templateHtml, err := ReadHtmlFileData("template.html")
+	templateHtml, err := ReadHtmlFileData(templatePath)
 	if err != nil {
 		return err
 	}
@@ -45,6 +46,16 @@ func WriteResponseHTML(htmlData string) error {
 	}
 
 	return nil
+}
+
+func RemoveTrailingFreeText(htmlData string) string {
+	index := strings.IndexRune(htmlData, '<')
+
+	if index == -1 {
+		return htmlData
+	}
+
+	return htmlData[index:]
 }
 
 func SanatizeHtml(badHtml string) string {

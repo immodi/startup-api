@@ -81,3 +81,13 @@ func GetAiResponse(message string) (string, error) {
 
 	return groqResp.Choices[0].Message.Content, nil
 }
+
+func MessageBuilder(topic string, templateId string) (string, string) {
+	htmlTemplate, err := os.ReadFile(fmt.Sprintf("templates/snipets/%s.html", templateId))
+
+	if err != nil {
+		return MessageBuilder(topic, "document")
+	}
+
+	return fmt.Sprintf("Fill in the following HTML template with information about %s: %s", topic, htmlTemplate), templateId
+}

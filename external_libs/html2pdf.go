@@ -1,4 +1,4 @@
-package lib
+package externallibs
 
 import (
 	"bytes"
@@ -124,6 +124,7 @@ func (g *Generator[T]) CapturePDF(browser *rod.Browser, htmlUrl, outputPath stri
 	if err != nil {
 		return fmt.Errorf("error creating browser page: %v", err)
 	}
+
 	pdfDataStream, err := page.MustWaitLoad().PDF(&proto.PagePrintToPDF{
 		PreferCSSPageSize: true,
 	})

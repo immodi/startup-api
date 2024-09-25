@@ -3,6 +3,7 @@ package lib
 import (
 	"fmt"
 	"html/template"
+	externallibs "immodi/startup/external_libs"
 	"os"
 )
 
@@ -26,7 +27,7 @@ func ParsePdfFile(htmlFileName string) {
 	}
 
 	// create a pdf generator
-	g := Generator[any]{
+	g := externallibs.Generator[any]{
 		OutputPath:     tempDir,
 		FinalPdf:       mergedPdf,
 		Template:       template,

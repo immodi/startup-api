@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Research Paper Title</title>
+        <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2em;
+            color: #2E073F; /* Custom Color */
+        }
+
+        h2 {
+            color: #7A1CAC; /* Custom Color */
+            border-bottom: 2px solid #EBD3F8; /* Light accent */
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+        
+        h3 {
+            margin-top: 15px;
+        }
+
+        p {
+            text-indent: 30px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .abstract {
+            font-weight: bold;
+            background-color: #EBD3F8; /* Light background */
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .references {
+            margin-top: 30px;
+        }
+
+        /* Apply page break rules to common block-level elements */
+        h1, h2, p, ul, li, div, section {
+            page-break-inside: avoid; 
+            orphans: auto; 
+            widows: auto;  
+        }
+    </style>
+    </head>
+    <body>
+
+        <div class="container">
+            {{.Content}}
+        </div>
+    </body>
+</html>

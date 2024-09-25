@@ -10,24 +10,27 @@ import (
 )
 
 type MessageRequest struct {
-	Message string `json:"message" binding:"required"`
+	Topic    string `json:"topic" binding:"required"`
+	Template string `json:"template" binding:"required"`
 }
 
 func Generate(c *gin.Context) {
 	var request MessageRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		responses.ErrorResponse(c, http.StatusBadRequest, "the field called 'message' is nonexistent")
+		responses.ErrorResponse(c, http.StatusBadRequest, "the fields called 'message' and 'template' are nonexistent")
 		return
 	}
-	response, err := GetAiResponse(request.Message)
+
+	message, usedTemplate := MessageBuilder(request.Topic, request.Template)
+	response, err := GetAiResponse(message)
 
 	if err != nil {
 		responses.ErrorResponse(c, http.StatusInternalServerError, "Couldn't contact AI model, please try again later")
 		return
 	}
 
-	err = lib.WriteResponseHTML(response)
+	err = lib.WriteResponseHTML(response, fmt.Sprintf("templates/%s.html", usedTemplate))
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -35,9 +38,9 @@ func Generate(c *gin.Context) {
 
 	lib.ParsePdfFile("data.html")
 
-	// c.JSON(http.StatusAccepted, gin.H{
-	// 	"response": response,
-	// })
+	c.JSON(http.StatusAccepted, gin.H{
+		"response": response,
+	})
 
-	c.FileAttachment("data.pdf", "data.pdf")
+	// c.FileAttachment("data.pdf", "data.pdf")
 }
