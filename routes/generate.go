@@ -20,7 +20,7 @@ type GinMessageRequest struct {
 type MessageRequest struct {
 	Topic    string         `json:"topic" form:"topic" binding:"required"`
 	Template string         `json:"template" form:"template" binding:"required"`
-	Data     map[string]any `json:"data" form:"data" binding:"required"`
+	Data     map[string]any `json:"data" form:"data"`
 }
 
 func GinGenerate(c *gin.Context) {
@@ -63,25 +63,22 @@ func Generate(c echo.Context) error {
 	var javascript string
 
 	if err := c.Bind(&request); err != nil {
-		responses.PbErrorResponse(c, http.StatusBadRequest, "Invalid request body")
-		return err
+		return responses.PbErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 	}
 
 	if request.Data != nil {
-		javascript = javascriptInjectionScript(&request.Data)
+		javascript = jsInjectionScript(&request.Data)
 	}
 
 	if request.Topic == "" {
-		responses.PbErrorResponse(c, http.StatusBadRequest, "Missing required fields, 'topic'")
-		return fmt.Errorf("missing required fields, 'topic' or 'template'")
+		return responses.PbErrorResponse(c, http.StatusBadRequest, "Missing required fields, 'topic' or 'template'")
 	}
 
 	message, usedTemplate := MessageBuilder(request.Topic, request.Template)
 	response, err := GetAiResponse(message)
 
 	if err != nil {
-		responses.PbErrorResponse(c, http.StatusInternalServerError, "Couldn't contact AI model, please try again later")
-		return err
+		return responses.PbErrorResponse(c, http.StatusInternalServerError, "Couldn't contact AI model, please try again later")
 	}
 
 	err = lib.WriteResponseHTML(response, fmt.Sprintf("templates/%s.html", usedTemplate))
@@ -104,7 +101,7 @@ func Generate(c echo.Context) error {
 	return nil
 }
 
-func javascriptInjectionScript(data *map[string]any) string {
+func jsInjectionScript(data *map[string]any) string {
 	var sb strings.Builder
 	sb.WriteString(`() => {`)
 
