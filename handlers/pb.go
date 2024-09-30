@@ -33,7 +33,7 @@ func PocketBase() *pocketbase.PocketBase {
 			Handler: routes.Generate,
 			Middlewares: []echo.MiddlewareFunc{
 				apis.ActivityLogger(app),
-				apis.RequireAdminAuth(),
+				apis.RequireRecordAuth("users"),
 			},
 		})
 

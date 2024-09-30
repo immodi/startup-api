@@ -16,14 +16,15 @@ import (
 )
 
 type Generator[T any] struct {
-	OutputPath     string             // directory path for generated data
-	FinalPdf       string             // the merged pdf name (make sure to include .pdf in the name)
-	Template       *template.Template // html template
-	Data           []T                // valid data for feeding the template
-	browser        *rod.Browser       // rod browser for auto generating pdf from html views
-	HtmlFiles      []*os.File         // list of generated html files
-	PdfFiles       []string           // list of generated pdf files
-	SingleHtmlFile bool               // If you want the template to be single file only
+	OutputPath      string             // directory path for generated data
+	FinalPdf        string             // the merged pdf name (make sure to include .pdf in the name)
+	Template        *template.Template // html template
+	Data            []T                // valid data for feeding the template
+	browser         *rod.Browser       // rod browser for auto generating pdf from html views
+	HtmlFiles       []*os.File         // list of generated html files
+	PdfFiles        []string           // list of generated pdf files
+	SingleHtmlFile  bool               // If you want the template to be single file only
+	JavascriptToRun string             // javascript you can run before converting html to pdf
 }
 
 // Generate pdf file from multible html templates
@@ -125,7 +126,13 @@ func (g *Generator[T]) CapturePDF(browser *rod.Browser, htmlUrl, outputPath stri
 		return fmt.Errorf("error creating browser page: %v", err)
 	}
 
-	pdfDataStream, err := page.MustWaitLoad().PDF(&proto.PagePrintToPDF{
+	// Wait for the page to load completely
+	if g.JavascriptToRun != "" {
+		page.MustWaitLoad().MustEval(g.JavascriptToRun)
+	}
+
+	// Generate the PDF after ensuring JavaScript changes have been applied
+	pdfDataStream, err := page.MustWait(`() => document.readyState === 'complete'`).PDF(&proto.PagePrintToPDF{
 		PreferCSSPageSize: true,
 	})
 

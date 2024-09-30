@@ -5,6 +5,8 @@ import (
 	"immodi/startup/lib"
 	"immodi/startup/responses"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/labstack/echo/v5"
@@ -16,8 +18,9 @@ type GinMessageRequest struct {
 }
 
 type MessageRequest struct {
-	Topic    string `json:"topic" form:"topic" binding:"required"`
-	Template string `json:"template" form:"template" binding:"required"`
+	Topic    string         `json:"topic" form:"topic" binding:"required"`
+	Template string         `json:"template" form:"template" binding:"required"`
+	Data     map[string]any `json:"data" form:"data" binding:"required"`
 }
 
 func GinGenerate(c *gin.Context) {
@@ -42,7 +45,13 @@ func GinGenerate(c *gin.Context) {
 		return
 	}
 
-	lib.ParsePdfFile("data.html")
+	lib.ParsePdfFile(lib.HtmlParserConfig{
+		HtmlFileName: "data.html",
+		JavascriptToRun: `() => {
+			// Example: Modify the DOM, add styles, or perform any action
+			document.body.style.backgroundColor = "lightblue";
+		}`,
+	})
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"response": response,
@@ -51,10 +60,15 @@ func GinGenerate(c *gin.Context) {
 
 func Generate(c echo.Context) error {
 	var request MessageRequest
+	var javascript string
 
 	if err := c.Bind(&request); err != nil {
 		responses.PbErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 		return err
+	}
+
+	if request.Data != nil {
+		javascript = javascriptInjectionScript(&request.Data)
 	}
 
 	if request.Topic == "" {
@@ -76,12 +90,36 @@ func Generate(c echo.Context) error {
 		return err
 	}
 
-	lib.ParsePdfFile("data.html")
+	lib.ParsePdfFile(lib.HtmlParserConfig{
+		HtmlFileName:    "data.html",
+		JavascriptToRun: javascript,
+	})
 
 	// c.JSON(http.StatusAccepted, gin.H{
 	// 	"response": response,
 	// })
+
 	c.File("data.pdf")
 
 	return nil
+}
+
+func javascriptInjectionScript(data *map[string]any) string {
+	var sb strings.Builder
+	sb.WriteString(`() => {`)
+
+	for key, value := range *data {
+		if valueString, ok := value.(string); ok {
+			sb.WriteString(fmt.Sprintf(`
+				try {
+					document.querySelector(".%s").innerHTML = %s;
+				} catch (e) {
+                    console.log(e)
+                }
+			`, key, strconv.Quote(valueString)))
+		}
+	}
+
+	sb.WriteString(`}`)
+	return sb.String()
 }

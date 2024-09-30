@@ -7,16 +7,19 @@ import (
 	"os"
 )
 
-type Data struct{}
+type HtmlParserConfig struct {
+	HtmlFileName    string
+	JavascriptToRun string
+}
 
-func ParsePdfFile(htmlFileName string) {
+func ParsePdfFile(config HtmlParserConfig) {
 	// directory for saving generated data
 	tempDir := "files"
 
 	// the final output
 	mergedPdf := "data.pdf"
 
-	data, err := ReadHtmlFileData(htmlFileName)
+	data, err := ReadHtmlFileData(config.HtmlFileName)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -28,10 +31,11 @@ func ParsePdfFile(htmlFileName string) {
 
 	// create a pdf generator
 	g := externallibs.Generator[any]{
-		OutputPath:     tempDir,
-		FinalPdf:       mergedPdf,
-		Template:       template,
-		SingleHtmlFile: true,
+		OutputPath:      tempDir,
+		FinalPdf:        mergedPdf,
+		Template:        template,
+		SingleHtmlFile:  true,
+		JavascriptToRun: config.JavascriptToRun,
 	}
 
 	// generate pdf
