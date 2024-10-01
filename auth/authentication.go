@@ -61,12 +61,12 @@ func AuthenticateUserWithUsername(c echo.Context, app *pocketbase.PocketBase) er
 		return responses.PbErrorResponse(c, http.StatusUnprocessableEntity, "'password' is required")
 	}
 
-	record, err := app.Dao().FindFirstRecordByData("users", "username", data.Username)
-	if err != nil || !record.ValidatePassword(data.Password) {
+	user, err := app.Dao().FindFirstRecordByData("users", "username", data.Username)
+	if err != nil || !user.ValidatePassword(data.Password) {
 		return responses.PbErrorResponse(c, http.StatusNotFound, "Invalid credentials")
 	}
 
-	return apis.RecordAuthResponse(app, c, record, nil)
+	return apis.RecordAuthResponse(app, c, user, nil)
 }
 
 func AuthenticateAdmin(c echo.Context, app *pocketbase.PocketBase) error {
