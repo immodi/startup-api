@@ -59,6 +59,18 @@ func PocketBase() *pocketbase.PocketBase {
 			},
 		})
 
+		e.Router.AddRoute(echo.Route{
+			Method: http.MethodPost,
+			Path:   "/api/templates",
+			Handler: func(c echo.Context) error {
+				return routes.GetUserTemplates(c, app)
+			},
+			Middlewares: []echo.MiddlewareFunc{
+				apis.ActivityLogger(app),
+				apis.RequireRecordAuth("users"),
+			},
+		})
+
 		return nil
 	})
 
