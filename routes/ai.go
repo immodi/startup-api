@@ -89,5 +89,5 @@ func MessageBuilder(topic string, templateId string) (string, string) {
 		return MessageBuilder(topic, "document")
 	}
 
-	return fmt.Sprintf("Fill in the following HTML template with information about %s: %s", topic, htmlTemplate), templateId
+	return fmt.Sprintf("Fill in the following HTML template %s with information about <topic>%s</topic>, only return the requested content.", htmlTemplate, topic), templateId
 }
