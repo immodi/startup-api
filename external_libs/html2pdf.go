@@ -25,6 +25,7 @@ type Generator[T any] struct {
 	PdfFiles        []string           // list of generated pdf files
 	SingleHtmlFile  bool               // If you want the template to be single file only
 	JavascriptToRun string             // javascript you can run before converting html to pdf
+	DocumentTitle   string             // the document title after after AI wirtes the <title> tag
 }
 
 // Generate pdf file from multible html templates
@@ -129,6 +130,12 @@ func (g *Generator[T]) CapturePDF(browser *rod.Browser, htmlUrl, outputPath stri
 	// Wait for the page to load completely
 	if g.JavascriptToRun != "" {
 		page.MustWaitLoad().MustEval(g.JavascriptToRun)
+		g.DocumentTitle = page.MustWaitLoad().MustEval(`
+			() => {
+				return document.querySelector(".title").textContent
+			}
+		`).String()
+
 	}
 
 	// Generate the PDF after ensuring JavaScript changes have been applied

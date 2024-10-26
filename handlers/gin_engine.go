@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"immodi/startup/middlewares"
-	"immodi/startup/routes"
 	"log"
 	"os"
 
@@ -31,7 +30,7 @@ func GinEngine() *gin.Engine {
 }
 
 func registerRoutes(r *gin.Engine) *gin.Engine {
-	r.POST("/", routes.GinGenerate)
+	// r.POST("/", routes.GinGenerate)
 
 	return r
 }

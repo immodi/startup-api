@@ -8,54 +8,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/labstack/echo/v5"
 )
-
-type GinMessageRequest struct {
-	Topic    string `json:"topic" binding:"required"`
-	Template string `json:"template" binding:"required"`
-}
 
 type MessageRequest struct {
 	Topic    string         `json:"topic" form:"topic" binding:"required"`
 	Template string         `json:"template" form:"template" binding:"required"`
 	Data     map[string]any `json:"data" form:"data"`
-}
-
-func GinGenerate(c *gin.Context) {
-	var request MessageRequest
-
-	if err := c.ShouldBindJSON(&request); err != nil {
-		responses.ErrorResponse(c, http.StatusBadRequest, "the fields called 'message' and 'template' are nonexistent")
-		return
-	}
-
-	message, usedTemplate := MessageBuilder(request.Topic, request.Template)
-	response, err := GetAiResponse(message)
-
-	if err != nil {
-		responses.ErrorResponse(c, http.StatusInternalServerError, "Couldn't contact AI model, please try again later")
-		return
-	}
-
-	err = lib.WriteResponseHTML(response, fmt.Sprintf("templates/%s.html", usedTemplate))
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-
-	lib.ParsePdfFile(lib.HtmlParserConfig{
-		HtmlFileName: "data.html",
-		JavascriptToRun: `() => {
-			// Example: Modify the DOM, add styles, or perform any action
-			document.body.style.backgroundColor = "lightblue";
-		}`,
-	})
-
-	c.JSON(http.StatusAccepted, gin.H{
-		"response": response,
-	})
 }
 
 func Generate(c echo.Context) error {
@@ -87,18 +46,17 @@ func Generate(c echo.Context) error {
 		return err
 	}
 
-	lib.ParsePdfFile(lib.HtmlParserConfig{
+	filepath, err := lib.ParsePdfFile(lib.HtmlParserConfig{
 		HtmlFileName:    "data.html",
 		JavascriptToRun: javascript,
 	})
 
-	// c.JSON(http.StatusAccepted, gin.H{
-	// 	"response": response,
-	// })
+	if err != nil {
+		return responses.PbErrorResponse(c, 500, err.Error())
+	}
 
-	c.File("data.pdf")
-
-	return nil
+	filename := strings.SplitAfter(filepath, "/")[1]
+	return c.Attachment(filepath, filename)
 }
 
 func jsInjectionScript(data *map[string]any) string {

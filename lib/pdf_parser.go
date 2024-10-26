@@ -12,7 +12,7 @@ type HtmlParserConfig struct {
 	JavascriptToRun string
 }
 
-func ParsePdfFile(config HtmlParserConfig) {
+func ParsePdfFile(config HtmlParserConfig) (string, error) {
 	// directory for saving generated data
 	tempDir := "files"
 
@@ -36,19 +36,26 @@ func ParsePdfFile(config HtmlParserConfig) {
 		Template:        template,
 		SingleHtmlFile:  true,
 		JavascriptToRun: config.JavascriptToRun,
+		DocumentTitle:   "",
 	}
 
 	// generate pdf
 	err = g.CreatePdf()
 	if err != nil {
 		fmt.Println(err)
+		return "", fmt.Errorf("Couldn't create the pdf, please try again!")
 	}
 
 	// delete the generated templates and pdf
 	err = g.DeleteFiles()
 	if err != nil {
-		fmt.Println(err)
+		return "", fmt.Errorf("Couldn't create the pdf, please try again!")
 	}
+
+	newFileName := fmt.Sprintf("pdfs/%s.pdf", g.DocumentTitle)
+	os.Rename("data.pdf", newFileName)
+
+	return newFileName, nil
 }
 
 func ReadHtmlFileData(htmlFilePath string) (string, error) {
