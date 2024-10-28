@@ -45,9 +45,11 @@ func PocketBase() *pocketbase.PocketBase {
 		})
 
 		e.Router.AddRoute(echo.Route{
-			Method:  http.MethodPost,
-			Path:    "/api/generate",
-			Handler: routes.Generate,
+			Method: http.MethodPost,
+			Path:   "/api/generate",
+			Handler: func(c echo.Context) error {
+				return routes.Generate(c, app)
+			},
 			Middlewares: []echo.MiddlewareFunc{
 				apis.ActivityLogger(app),
 				apis.RequireAdminOrRecordAuth("users"),
