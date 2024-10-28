@@ -14,6 +14,7 @@ import (
 type MessageRequest struct {
 	Topic    string         `json:"topic" form:"topic" binding:"required"`
 	Template string         `json:"template" form:"template" binding:"required"`
+	Level    int            `json:"level" form:"level" binding:"required"`
 	Data     map[string]any `json:"data" form:"data"`
 }
 
@@ -33,7 +34,7 @@ func Generate(c echo.Context) error {
 		return responses.PbErrorResponse(c, http.StatusBadRequest, "Missing required fields, 'topic' or 'template'")
 	}
 
-	message, usedTemplate := MessageBuilder(request.Topic, request.Template)
+	message, usedTemplate := MessageBuilder(request.Topic, request.Template, request.Level)
 	response, err := GetAiResponse(message)
 
 	if err != nil {

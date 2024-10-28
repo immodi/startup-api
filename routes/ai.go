@@ -82,12 +82,12 @@ func GetAiResponse(message string) (string, error) {
 	return groqResp.Choices[0].Message.Content, nil
 }
 
-func MessageBuilder(topic string, templateId string) (string, string) {
+func MessageBuilder(topic string, templateId string, level int) (string, string) {
 	htmlTemplate, err := os.ReadFile(fmt.Sprintf("templates/snipets/%s.html", templateId))
 
 	if err != nil {
-		return MessageBuilder(topic, "document")
+		return MessageBuilder(topic, "document", level)
 	}
 
-	return fmt.Sprintf("Fill in the following HTML template %s with information about <topic>%s</topic>, please return the ONLY the requested content and no comments like {Let me know if you'd like me to add or modify anything!}", htmlTemplate, topic), templateId
+	return fmt.Sprintf("Fill in the following HTML template %s with information about <topic>%s</topic>, please return the ONLY the requested content and no comments like {Let me know if you'd like me to add or modify anything!}, keep the vocabulary level at %d/10", htmlTemplate, topic, level), templateId
 }
