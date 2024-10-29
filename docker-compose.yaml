@@ -5,18 +5,29 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - BUILDKIT_STEP_LOG_MAX_SIZE=10485760
     container_name: go-app
     network_mode: "host"
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 500M
+          cpus: '0.5'          # Reduced CPU limit
+          memory: '300M'       # Reduced memory limit
         reservations:
-          cpus: '0.25'
-          memory: 200M
+          cpus: '0.1'         # Reduced CPU reservation
+          memory: '100M'      # Reduced memory reservation
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "8090:8090"
-    restart: unless-stopped
+    restart: on-failure:5     # Changed to on-failure with max retries
     environment:
       - GO_ENV=production
+      - GOGC=50              # Aggressive garbage collection
+      - GOMAXPROCS=1         # Limit Go runtime to single CPU
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

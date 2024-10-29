@@ -2,21 +2,36 @@
 FROM golang:1.22.2-alpine AS build
 WORKDIR /app
 
-# Install build dependencies
+# Add necessary build deps
 RUN apk add --no-cache gcc musl-dev
 
-# Copy only the dependency files first
+# Copy dependency files
 COPY go.mod go.sum ./
-RUN go mod download
 
-# Copy the rest of the source code
+# Download deps with limited concurrency
+RUN go mod download -x
+
+# Copy source
 COPY . .
 
-# Build with memory and CPU constraints
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+# Build with optimizations and constraints
+RUN CGO_ENABLED=0 GOOS=linux \
+    GOGC=50 \
+    go build \
+    -ldflags="-s -w" \
+    -o main .
 
-# Use a minimal image for the final container
-FROM alpine:latest
+# Final stage
+FROM alpine:3.19
 WORKDIR /app
 COPY --from=build /app/main .
+RUN chmod +x /app/main
+
+# Add basic tools and security updates
+RUN apk --no-cache add ca-certificates tzdata && \
+    adduser -D -H -h /app appuser && \
+    chown appuser:appuser /app/main
+
+USER appuser
+
 CMD ["./main", "serve", "--http=0.0.0.0:8090"]
