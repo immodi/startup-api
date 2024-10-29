@@ -43,14 +43,20 @@ func ParsePdfFile(config HtmlParserConfig) (string, error) {
 	err = g.CreatePdf()
 	if err != nil {
 		fmt.Println(err)
-		return "", fmt.Errorf("Couldn't create the pdf, please try again!")
+		return "", fmt.Errorf("couldnt create the pdf please try again")
 	}
 
 	// delete the generated templates and pdf
 	err = g.DeleteFiles()
 	if err != nil {
-		return "", fmt.Errorf("Couldn't create the pdf, please try again!")
+		return "", fmt.Errorf("couldnt create the pdf please try again")
 	}
+
+	if err := os.Mkdir("pdfs", os.ModePerm); err != nil {
+		fmt.Println("'pdfs' dir already exists")
+	}
+
+	clearPdfsDirectory()
 
 	newFileName := fmt.Sprintf("pdfs/%s.pdf", g.DocumentTitle)
 	os.Rename("data.pdf", newFileName)
@@ -65,4 +71,26 @@ func ReadHtmlFileData(htmlFilePath string) (string, error) {
 	}
 
 	return string(f), nil
+}
+
+func clearPdfsDirectory() {
+	dir := "pdfs"
+
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		fmt.Println("Error reading directory:", err)
+		return
+	}
+
+	// Iterate over files and delete each one
+	for _, file := range files {
+		if !file.IsDir() { // Skip directories
+			err := os.Remove(dir + "/" + file.Name())
+			if err != nil {
+				fmt.Println("Error deleting file:", file.Name(), err)
+			} else {
+				fmt.Println("Deleted file:", file.Name())
+			}
+		}
+	}
 }
