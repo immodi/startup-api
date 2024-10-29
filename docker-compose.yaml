@@ -6,15 +6,17 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: go-app
-    network_mode: "host"  # Use host network
+    network_mode: "host"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 500M
+        reservations:
+          cpus: '0.25'
+          memory: 200M
     ports:
-      - "8090:8090"  # While not strictly necessary with host network, keeping for documentation
+      - "8090:8090"
     restart: unless-stopped
     environment:
       - GO_ENV=production
-    volumes:
-      - ./:/app  # Optional: Mount source code for development
-
-networks:
-  default:
-    driver: bridge

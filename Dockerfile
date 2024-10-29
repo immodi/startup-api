@@ -1,16 +1,22 @@
-FROM golang:1.22.2 as build
-
+# Dockerfile
+FROM golang:1.22.2-alpine AS build
 WORKDIR /app
 
-# Copy the Go module files
-COPY go.mod .
-COPY go.sum .
+# Install build dependencies
+RUN apk add --no-cache gcc musl-dev
 
-# Download the Go module dependencies
+# Copy only the dependency files first
+COPY go.mod go.sum ./
 RUN go mod download
 
+# Copy the rest of the source code
 COPY . .
 
-RUN go build -o main .
+# Build with memory and CPU constraints
+RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
+# Use a minimal image for the final container
+FROM alpine:latest
+WORKDIR /app
+COPY --from=build /app/main .
 CMD ["./main", "serve", "--http=0.0.0.0:8090"]
