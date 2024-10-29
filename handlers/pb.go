@@ -5,6 +5,7 @@ import (
 	"immodi/startup/routes"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -18,7 +19,7 @@ func PocketBase() *pocketbase.PocketBase {
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-			AllowOrigins: []string{"*"},
+			AllowOrigins: []string{os.Getenv("FRONTEND_URL"), "http://localhost:5173"},
 			AllowHeaders: []string{
 				echo.HeaderOrigin,
 				echo.HeaderContentType,
@@ -30,7 +31,7 @@ func PocketBase() *pocketbase.PocketBase {
 				"Content-Disposition",
 			},
 			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-			AllowCredentials: true,
+			AllowCredentials: true, // Enable if credentials are required
 		}))
 
 		e.Router.AddRoute(echo.Route{
