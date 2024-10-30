@@ -51,8 +51,5 @@ COPY --chown=pocketbase:pocketbase pb_migrations/ /app/pb_migrations/
 # Expose PocketBase port
 EXPOSE 8090
 
-# Set environment variables
-ENV PB_ENCRYPTION_KEY=""
-
 # Command to run the application
 CMD ["./pocketbase", "serve", "--http=0.0.0.0:8090"]
