@@ -5,16 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: go-app
-    network_mode: "host"
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: '300M'
-        reservations:
-          cpus: '0.1'
-          memory: '100M'
+    container_name: startup-backend
     ports:
       - "8090:8090"
     restart: unless-stopped
