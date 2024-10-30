@@ -32,11 +32,11 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 	var request MessageRequest
 	var javascript string
 
-	token := c.Request().Header.Get("Authorization")
-	user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
-	if err != nil {
-		return responses.PbErrorResponse(c, http.StatusBadRequest, "Invalid Token")
-	}
+	// token := c.Request().Header.Get("Authorization")
+	// user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
+	// if err != nil {
+	// 	return responses.PbErrorResponse(c, http.StatusBadRequest, "Invalid Token")
+	// }
 
 	if err := c.Bind(&request); err != nil {
 		return responses.PbErrorResponse(c, http.StatusBadRequest, "Invalid request body")
@@ -71,14 +71,19 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 		return responses.PbErrorResponse(c, 500, err.Error())
 	}
 
-	go storeUserFile(&UserFile{
-		app:      app,
-		filepath: filepath,
-		user:     user,
-	})
+	// go storeUserFile(&UserFile{
+	// 	app:      app,
+	// 	filepath: filepath,
+	// 	user:     user,
+	// })
 
 	filename := strings.SplitAfter(filepath, "/")[1]
-	return c.Attachment(filepath, filename)
+	err = c.Attachment(filepath, filename)
+	if err != nil {
+		println(fmt.Sprintf("FileResponse Error: %s \n", err.Error()))
+	}
+
+	return err
 }
 
 func jsInjectionScript(data *map[string]any) string {
