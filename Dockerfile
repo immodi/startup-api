@@ -17,13 +17,20 @@ COPY . .
 # Build the application
 RUN go build -o main .
 
+# Create pb_data directory and set permissions
+RUN mkdir -p /app/pb_data \
+    && chown -R appuser:appuser /app/pb_data \
+    && chmod 755 /app/pb_data
+
 # Set proper ownership and permissions
-RUN chown appuser:appuser /app \
+RUN chown -R appuser:appuser /app \
     && chmod 755 /app \
-    && chown appuser:appuser /app/main \
     && chmod 755 /app/main
 
 EXPOSE 8090
+
+# Create volume for persistent data
+VOLUME /app/pb_data
 
 # Switch to non-root user
 USER appuser
