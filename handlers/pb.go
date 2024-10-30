@@ -30,8 +30,8 @@ func PocketBase() *pocketbase.PocketBase {
 			ExposeHeaders: []string{
 				"Content-Disposition",
 			},
-			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-			AllowCredentials: true, // Enable if credentials are required
+			AllowMethods:     []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+			AllowCredentials: false,
 		}))
 
 		e.Router.AddRoute(echo.Route{
