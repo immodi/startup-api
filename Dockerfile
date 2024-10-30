@@ -14,14 +14,4 @@ COPY . .
 # Build with optimizations
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
-# Final Stage
-FROM alpine:3.19
-WORKDIR /app
-
-# Copy binary from build stage
-COPY --from=build /app/main .
-
-# Set permissions for the /app directory and main executable
-RUN chmod u+rwx /app/main && chmod -R u+rwx /app
-
 CMD ["./main", "serve", "--http=0.0.0.0:8090"]
