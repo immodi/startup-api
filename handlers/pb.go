@@ -30,7 +30,7 @@ func PocketBase() *pocketbase.PocketBase {
 			ExposeHeaders: []string{
 				"Content-Disposition",
 			},
-			AllowMethods:     []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+			AllowMethods:     []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete, http.MethodOptions},
 			AllowCredentials: false,
 		}))
 
