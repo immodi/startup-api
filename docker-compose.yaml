@@ -13,8 +13,6 @@ services:
       - GO_ENV=production
     volumes:
       - ./pb_data:/app/pb_data
-      - ./pb_public:/app/pb_public     # Added public files volume
-      - ./pb_migrations:/app/pb_migrations  # Added migrations volume
     deploy:
       resources:
         limits:
