@@ -1,38 +1,58 @@
-FROM golang:1.22.2 as build
+# Build stage
+FROM golang:1.21-alpine AS builder
 
-# Create a non-root user and group
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Install required build dependencies
+RUN apk add --no-cache git build-base
 
+# Set working directory
 WORKDIR /app
 
-# Copy the Go module files
-COPY go.mod .
-COPY go.sum .
+# Copy go mod and sum files
+COPY go.mod go.sum ./
 
-# Download the Go module dependencies
+# Download dependencies
 RUN go mod download
 
+# Copy source code
 COPY . .
 
 # Build the application
-RUN go build -o main .
+RUN CGO_ENABLED=1 GOOS=linux go build -o pocketbase
 
-# Create pb_data directory and set permissions
-RUN mkdir -p /app/pb_data \
-    && chown -R appuser:appuser /app/pb_data \
-    && chmod 755 /app/pb_data
+# Final stage
+FROM alpine:3.19
 
-# Set proper ownership and permissions
-RUN chown -R appuser:appuser /app \
-    && chmod 755 /app \
-    && chmod 755 /app/main
+# Install required runtime dependencies
+RUN apk add --no-cache ca-certificates tzdata
 
-EXPOSE 8090
+# Create a dedicated user and group with specific UID/GID
+RUN addgroup -S pocketbase -g 1000 && \
+    adduser -S pocketbase -u 1000 -G pocketbase
 
-# Create volume for persistent data
-VOLUME /app/pb_data
+# Create necessary directories
+WORKDIR /app
+RUN mkdir -p /app/pb_data && \
+    mkdir -p /app/pb_public && \
+    mkdir -p /app/pb_migrations && \
+    chown -R pocketbase:pocketbase /app && \
+    chmod -R 744 /app
 
 # Switch to non-root user
-USER appuser
+USER pocketbase:pocketbase
 
-CMD ["./main", "serve", "--http=0.0.0.0:8090"]
+# Copy the binary from builder
+COPY --from=builder --chown=pocketbase:pocketbase /app/pocketbase /app/pocketbase
+RUN chmod +x /app/pocketbase
+
+# Copy static files and migrations if they exist
+COPY --chown=pocketbase:pocketbase pb_public/ /app/pb_public/
+COPY --chown=pocketbase:pocketbase pb_migrations/ /app/pb_migrations/
+
+# Expose PocketBase port
+EXPOSE 8090
+
+# Set environment variables
+ENV PB_ENCRYPTION_KEY=""
+
+# Command to run the application
+CMD ["./pocketbase", "serve", "--http=0.0.0.0:8090"]
