@@ -13,3 +13,7 @@ services:
       - GO_ENV=production
     volumes:
       - ./pb_data:/app/pb_data
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
