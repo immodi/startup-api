@@ -77,8 +77,8 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 		user:     user,
 	})
 
-	filename := strings.SplitAfter(filepath, "/")[1]
-	return c.Attachment(filepath, filename)
+	// filename := strings.SplitAfter(filepath, "/")[1]
+	return c.File(filepath)
 }
 
 func jsInjectionScript(data *map[string]any) string {
