@@ -1,28 +1,31 @@
-# Build Stage
-FROM golang:1.22.2-alpine AS build
+FROM golang:1.22.2 as build
+
+# Create a non-root user and group
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
 WORKDIR /app
 
-# Add necessary build dependencies
-RUN apk add --no-cache gcc musl-dev
+# Copy the Go module files
+COPY go.mod .
+COPY go.sum .
 
-# Copy dependency files
-COPY go.mod go.sum ./
-RUN go mod download -x
+# Download the Go module dependencies
+RUN go mod download
 
-# Copy source code
 COPY . .
 
-# Build with optimizations
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+# Build the application
+RUN go build -o main .
 
-# Final Stage
-FROM alpine:3.19
-WORKDIR /app
+# Set proper ownership and permissions
+RUN chown appuser:appuser /app \
+    && chmod 755 /app \
+    && chown appuser:appuser /app/main \
+    && chmod 755 /app/main
 
-# Copy binary from build stage
-COPY --from=build /app/main .
+EXPOSE 8090
 
-# Set permissions for the /app directory and main executable
-RUN chmod u+rwx /app/main && chmod -R u+rwx /app
+# Switch to non-root user
+USER appuser
 
 CMD ["./main", "serve", "--http=0.0.0.0:8090"]
