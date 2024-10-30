@@ -45,8 +45,8 @@ COPY --from=builder --chown=pocketbase:pocketbase /app/pocketbase /app/pocketbas
 RUN chmod +x /app/pocketbase
 
 # Copy static files and migrations if they exist
-COPY --chown=pocketbase:pocketbase pb_public/ /app/pb_public/
-COPY --chown=pocketbase:pocketbase pb_migrations/ /app/pb_migrations/
+# COPY --chown=pocketbase:pocketbase pb_public/ /app/pb_public/
+# COPY --chown=pocketbase:pocketbase pb_migrations/ /app/pb_migrations/
 
 # Expose PocketBase port
 EXPOSE 8090
