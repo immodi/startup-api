@@ -5,6 +5,7 @@ import (
 	"immodi/startup/lib"
 	"immodi/startup/responses"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -31,6 +32,8 @@ type UserFile struct {
 func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 	var request MessageRequest
 	var javascript string
+
+	println(os.Getenv("FRONTEND_URL"))
 
 	token := c.Request().Header.Get("Authorization")
 	user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
@@ -78,7 +81,9 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 	})
 
 	// filename := strings.SplitAfter(filepath, "/")[1]
-	return c.File(filepath)
+	err = c.File(filepath)
+	println(err.Error())
+	return err
 }
 
 func jsInjectionScript(data *map[string]any) string {
