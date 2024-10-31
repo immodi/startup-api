@@ -22,16 +22,16 @@ type GroqResponse struct {
 
 func GetAiResponse(message string) (string, error) {
 	url := "https://api.groq.com/openai/v1/chat/completions"
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file")
-		return "", err
 	}
 
 	apiKey := os.Getenv("API_KEY")
 	if apiKey == "" {
-		fmt.Println(".")
-		return "Error using the service, please try again later", err
+		log.Fatalf("Error loading env var")
+		return "Error using the service, please try again later", fmt.Errorf("error loading env file")
 	}
 
 	payload := map[string]interface{}{
