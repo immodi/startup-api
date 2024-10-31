@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"immodi/startup/middlewares"
-	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +15,7 @@ func GinEngine() *gin.Engine {
 	registerRoutes(r)
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		println("Error loading .env file, will try to see the system ENV variables")
 	}
 
 	port := os.Getenv("PORT")
