@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: startup-backend
+    privileged: true  # Added privileged mode
     ports:
       - "8090:8090"
     restart: unless-stopped
@@ -11,6 +12,10 @@ services:
       - GO_ENV=production
       - CHROMIUM_FLAGS="--no-sandbox --disable-dev-shm-usage --disable-gpu"
       - CHROMIUM_PATH=/usr/bin/chromium-browser
+      # Debug settings
+      - GOTRACEBACK=crash
+      - GOGC=50
+      - GODEBUG=gctrace=1
     volumes:
       - ./pb_data:/app/pb_data
       - ./chrome-data:/tmp/chrome-data
@@ -18,11 +23,16 @@ services:
     deploy:
       resources:
         limits:
+          memory: 1G
+          cpus: '2'
+        reservations:
           memory: 512mb
           cpus: '1'
-        reservations:
-          memory: 256mb
-          cpus: '0.5'
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp=unconfined
+      - apparmor=unconfined
     ulimits:
       memlock:
         soft: -1
