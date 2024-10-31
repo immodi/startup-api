@@ -25,7 +25,7 @@ func GetAiResponse(message string) (string, error) {
 
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		fmt.Println("Error loading .env file, will try to see the system ENV variables")
 	}
 
 	apiKey := os.Getenv("API_KEY")
