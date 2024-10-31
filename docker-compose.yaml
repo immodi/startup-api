@@ -28,8 +28,6 @@ services:
         reservations:
           memory: 512mb
           cpus: '1'
-    cap_add:
-      - SYS_PTRACE
     security_opt:
       - seccomp=unconfined
       - apparmor=unconfined
