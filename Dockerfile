@@ -64,7 +64,6 @@ COPY --from=build /app/main .
 
 # Copy the templates directory, .env file, and template.html into the /app directory in the runtime container
 COPY templates/ /app/templates/
-COPY .env /app/.env
 COPY template.html /app/template.html
 
 CMD ["./main", "serve", "--http=0.0.0.0:8090"]
