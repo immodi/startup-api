@@ -23,20 +23,15 @@ type MessageRequest struct {
 }
 
 type UserFile struct {
-	app      *pocketbase.PocketBase
 	filepath string
-	user     *models.Record
+	token    string
 }
 
 func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 	var request MessageRequest
 	var javascript string
 
-	// token := c.Request().Header.Get("Authorization")
-	// user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
-	// if err != nil {
-	// 	return responses.PbErrorResponse(c, http.StatusBadRequest, "Invalid Token")
-	// }
+	token := c.Request().Header.Get("Authorization")
 
 	if err := c.Bind(&request); err != nil {
 		return responses.PbErrorResponse(c, http.StatusBadRequest, "Invalid request body")
@@ -71,11 +66,10 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 		return responses.PbErrorResponse(c, 500, err.Error())
 	}
 
-	// go storeUserFile(&UserFile{
-	// 	app:      app,
-	// 	filepath: filepath,
-	// 	user:     user,
-	// })
+	go storeUserFile(app, UserFile{
+		filepath: filepath,
+		token:    token,
+	})
 
 	filename := strings.SplitAfter(filepath, "/")[1]
 	err = c.Attachment(filepath, filename)
@@ -144,13 +138,18 @@ func updateUserRecord(app *pocketbase.PocketBase, user *models.Record, fileId st
 	return nil
 }
 
-func storeUserFile(userData *UserFile) error {
-	fileId, err := storeFile(userData.app, userData.filepath)
+func storeUserFile(app *pocketbase.PocketBase, userData UserFile) error {
+	user, err := app.Dao().FindAuthRecordByToken(userData.token, app.Settings().RecordAuthToken.Secret)
 	if err != nil {
 		return err
 	}
 
-	err = updateUserRecord(userData.app, userData.user, fileId)
+	fileId, err := storeFile(app, userData.filepath)
+	if err != nil {
+		return err
+	}
+
+	err = updateUserRecord(app, user, fileId)
 	if err != nil {
 		return err
 	}
