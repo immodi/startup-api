@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"immodi/startup/auth"
+	"immodi/startup/repo"
 	"immodi/startup/routes"
 	"log"
 	"net/http"
@@ -83,7 +84,7 @@ func PocketBase() *pocketbase.PocketBase {
 			Method: http.MethodPost,
 			Path:   "/api/templates",
 			Handler: func(c echo.Context) error {
-				return routes.GetUserTemplates(c, app)
+				return repo.GetUserTemplates(c, app)
 			},
 			Middlewares: []echo.MiddlewareFunc{
 				apis.ActivityLogger(app),

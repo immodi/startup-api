@@ -4,22 +4,26 @@ import (
 	"fmt"
 	"html/template"
 	externallibs "immodi/startup/external_libs"
+	"immodi/startup/repo"
 	"os"
+
+	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/pocketbase"
 )
 
 type HtmlParserConfig struct {
-	HtmlFileName    string
+	TemplateName    string
 	JavascriptToRun string
 }
 
-func ParsePdfFile(config HtmlParserConfig) (string, error) {
+func ParsePdfFile(c echo.Context, app *pocketbase.PocketBase, config HtmlParserConfig) (string, error) {
 	// directory for saving generated data
 	tempDir := "files"
 
 	// the final output
 	mergedPdf := "data.pdf"
 
-	data, err := ReadHtmlFileData(config.HtmlFileName)
+	data, err := ReadFileData(config.TemplateName)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -64,10 +68,20 @@ func ParsePdfFile(config HtmlParserConfig) (string, error) {
 	return newFileName, nil
 }
 
-func ReadHtmlFileData(htmlFilePath string) (string, error) {
-	f, err := os.ReadFile(htmlFilePath)
+func ReadHtmlFileDataFromDB(c echo.Context, app *pocketbase.PocketBase, templateName string) (string, error) {
+	// f, err := os.ReadFile(htmlFilePath)
+	templateHtml, err := repo.GetUserTemplateByName(c, app, templateName)
 	if err != nil {
 		return "<html><head></head><body>No Data</body></html>", err
+	}
+
+	return templateHtml, nil
+}
+
+func ReadFileData(fileName string) (string, error) {
+	f, err := os.ReadFile(fileName)
+	if err != nil {
+		return "", err
 	}
 
 	return string(f), nil

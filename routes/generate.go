@@ -45,20 +45,17 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 		return responses.PbErrorResponse(c, http.StatusBadRequest, "Missing required fields, 'topic' or 'template'")
 	}
 
-	message, usedTemplate := MessageBuilder(request.Topic, request.Template, request.Level)
-	response, err := GetAiResponse(message)
+	message := MessageBuilder(c, app, request.Topic, request.Template, request.Level)
 
-	if err != nil {
-		return responses.PbErrorResponse(c, http.StatusInternalServerError, "Couldn't contact AI model, please try again later")
-	}
+	htmlAiResponse := getAIResponse(message)
 
-	err = lib.WriteResponseHTML(response, fmt.Sprintf("templates/%s.html", usedTemplate))
+	err := lib.WriteResponseHTML(c, app, request.Template, htmlAiResponse)
 	if err != nil {
 		return err
 	}
 
-	filepath, err := lib.ParsePdfFile(lib.HtmlParserConfig{
-		HtmlFileName:    "data.html",
+	filepath, err := lib.ParsePdfFile(c, app, lib.HtmlParserConfig{
+		TemplateName:    "data.html",
 		JavascriptToRun: javascript,
 	})
 
@@ -78,6 +75,16 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 	}
 
 	return err
+}
+
+func getAIResponse(message string) string {
+	response, err := GetAiResponse(message)
+
+	if err != nil {
+		return getAIResponse(message)
+	}
+
+	return response
 }
 
 func jsInjectionScript(data *map[string]any) string {

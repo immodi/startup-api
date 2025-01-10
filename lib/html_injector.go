@@ -1,10 +1,13 @@
 package lib
 
 import (
+	"fmt"
 	"html/template"
 	"os"
 	"strings"
 
+	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/pocketbase"
 	"github.com/russross/blackfriday/v2"
 )
 
@@ -14,10 +17,23 @@ type Tag struct {
 	TagLength int
 }
 
-func WriteResponseHTML(htmlData string, templatePath string) error {
+func WriteResponseHTML(c echo.Context, app *pocketbase.PocketBase, templateName string, htmlData string) error {
 	htmlData = RemoveTrailingFreeText(htmlData)
 
-	templateHtml, err := ReadHtmlFileData(templatePath)
+	localTemplates := make(map[string]string)
+	localTemplates["document"] = "document.html"
+	localTemplates["report"] = "report.html"
+	localTemplates["paragraph"] = "paragraph.html"
+	localTemplates["template"] = "template.html"
+
+	var templatePath string
+	if _, ok := localTemplates[templateName]; ok {
+		templatePath = localTemplates[templateName]
+	} else {
+		templatePath = localTemplates["template"]
+	}
+
+	templateHtml, err := ReadFileData(fmt.Sprintf("templates/%s", templatePath))
 	if err != nil {
 		return err
 	}

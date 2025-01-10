@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"immodi/startup/repo"
 	"io"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/pocketbase"
 )
 
 type GroqResponse struct {
@@ -82,12 +85,13 @@ func GetAiResponse(message string) (string, error) {
 	return groqResp.Choices[0].Message.Content, nil
 }
 
-func MessageBuilder(topic string, templateId string, level int) (string, string) {
-	htmlTemplate, err := os.ReadFile(fmt.Sprintf("templates/snipets/%s.html", templateId))
-
+func MessageBuilder(c echo.Context, app *pocketbase.PocketBase, topic string, templateName string, level int) string {
+	//  htmlTemplate, _ := os.ReadFile("templates/snipets/template.html")
+	htmlTemplate, err := repo.GetUserTemplateByName(c, app, templateName)
 	if err != nil {
-		return MessageBuilder(topic, "document", level)
+		htmlTemplateByteArray, _ := os.ReadFile("templates/snipets/document.html")
+		htmlTemplate = string(htmlTemplateByteArray)
 	}
 
-	return fmt.Sprintf("Fill in the following HTML template %s with information about <topic>%s</topic>, please return the ONLY the requested content and no comments like {Let me know if you'd like me to add or modify anything!}, keep the vocabulary level at %d/10", htmlTemplate, topic, level), templateId
+	return fmt.Sprintf("Fill in the following HTML template %s with information about <topic>%s</topic>, please return the ONLY the requested content and no comments like {Let me know if you'd like me to add or modify anything!}, keep the vocabulary level at %d/10", htmlTemplate, topic, level)
 }
