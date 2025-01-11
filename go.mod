@@ -10,7 +10,6 @@ require (
 	github.com/pdfcpu/pdfcpu v0.8.0
 	github.com/pocketbase/pocketbase v0.22.21
 	github.com/russross/blackfriday/v2 v2.1.0
-	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678
 )
 
 require (
