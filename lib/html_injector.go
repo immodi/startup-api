@@ -17,8 +17,8 @@ type Tag struct {
 	TagLength int
 }
 
-func WriteResponseHTML(c echo.Context, app *pocketbase.PocketBase, templateName string, htmlData string) error {
-	htmlData = RemoveTrailingFreeText(htmlData)
+func WriteResponseHTML(c echo.Context, app *pocketbase.PocketBase, templateName string, htmlData string, styleTag string, insertStyleTag func(string, string) string) error {
+	htmlData = insertStyleTag(RemoveTrailingFreeText(htmlData), styleTag)
 
 	localTemplates := make(map[string]string)
 	localTemplates["document"] = "document.html"

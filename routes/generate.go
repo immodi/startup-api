@@ -45,11 +45,15 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 		return responses.PbErrorResponse(c, http.StatusBadRequest, "Missing required fields, 'topic' or 'template'")
 	}
 
-	message := MessageBuilder(c, app, request.Topic, request.Template, request.Level)
+	message, styleTag := MessageBuilder(c, app, request.Topic, request.Template, request.Level)
 
-	htmlAiResponse := getAIResponse(message)
+	// htmlAiResponse := getAIResponse(message)
+	htmlAiResponse, err := GetAiResponse(message)
+	if err != nil {
+		return err
+	}
 
-	err := lib.WriteResponseHTML(c, app, request.Template, htmlAiResponse)
+	err = lib.WriteResponseHTML(c, app, request.Template, htmlAiResponse, styleTag, InsertStyleTag)
 	if err != nil {
 		return err
 	}

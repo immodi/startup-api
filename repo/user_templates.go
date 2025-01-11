@@ -17,15 +17,13 @@ func GetUserTemplates(c echo.Context, app *pocketbase.PocketBase) error {
 	}
 
 	templateIds := user.GetStringSlice("user_templates")
-	templateNames := make([]string, 0)
+	templates := make([][]string, 0)
 	for _, templateId := range templateIds {
 		templateName, _ := app.Dao().FindRecordById("templates", templateId)
-		templateNames = append(templateNames, templateName.GetString("name"))
+		templates = append(templates, []string{templateId, templateName.GetString("name")})
 	}
 
-	return c.JSON(http.StatusAccepted, map[string][]string{
-		"templates": templateNames,
-	})
+	return c.JSON(http.StatusAccepted, templates)
 }
 
 func GetUserTemplateByName(c echo.Context, app *pocketbase.PocketBase, userTemplateName string) (string, error) {

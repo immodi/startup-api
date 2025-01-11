@@ -132,7 +132,22 @@ func (g *Generator[T]) CapturePDF(browser *rod.Browser, htmlUrl, outputPath stri
 		page.MustWaitLoad().MustEval(g.JavascriptToRun)
 		g.DocumentTitle = page.MustWaitLoad().MustEval(`
 			() => {
-				return document.querySelector(".title").textContent
+				const canvas = document.querySelector('#canvas');
+				canvas.classList.remove("overflow-y-scroll")
+				const style = document.querySelector('style');
+				style.textContent = "html, body { overflow: none; scrollbar-width: none; -ms-overflow-style: none; } body::-webkit-scrollbar { display: none; } " + style.textContent;
+
+				return document.querySelector(".title").textContent;
+			}
+		`).String()
+	} else {
+		page.MustWaitLoad().MustEval(g.JavascriptToRun)
+		g.DocumentTitle = page.MustWaitLoad().MustEval(`
+			() => {
+				const canvas = document.querySelector('#canvas');
+				canvas.classList.remove("overflow-y-scroll")
+				const style = document.querySelector('style');
+				style.textContent = "html, body { overflow: none; scrollbar-width: none; -ms-overflow-style: none; } body::-webkit-scrollbar { display: none; } " + style.textContent;
 			}
 		`).String()
 

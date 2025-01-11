@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v5"
@@ -85,13 +87,67 @@ func GetAiResponse(message string) (string, error) {
 	return groqResp.Choices[0].Message.Content, nil
 }
 
-func MessageBuilder(c echo.Context, app *pocketbase.PocketBase, topic string, templateName string, level int) string {
+func MessageBuilder(c echo.Context, app *pocketbase.PocketBase, topic string, templateName string, level int) (string, string) {
 	//  htmlTemplate, _ := os.ReadFile("templates/snipets/template.html")
 	htmlTemplate, err := repo.GetUserTemplateByName(c, app, templateName)
+	styleTagString := extractStyleTagContent(htmlTemplate)
+
 	if err != nil {
 		htmlTemplateByteArray, _ := os.ReadFile("templates/snipets/document.html")
 		htmlTemplate = string(htmlTemplateByteArray)
 	}
 
-	return fmt.Sprintf("Fill in the following HTML template %s with information about <topic>%s</topic>, please return the ONLY the requested content and no comments like {Let me know if you'd like me to add or modify anything!}, keep the vocabulary level at %d/10", htmlTemplate, topic, level)
+	return fmt.Sprintf("Fill in the following HTML template %s with information about <topic>%s</topic>, please return the ONLY the requested content and no comments like {Let me know if you'd like me to add or modify anything!}, keep the vocabulary level at %d/10, and dont add any text to <br> tags", stripStyleTag(htmlTemplate), topic, level), styleTagString
+}
+
+func extractStyleTagContent(html string) string {
+	// Case-insensitive regex pattern to match <style> tags and their content
+	pattern := `(?i)<style\b[^>]*>([\s\S]*?)</style>`
+
+	// Compile the regex pattern
+	re := regexp.MustCompile(pattern)
+
+	// Find the first match and extract the content inside the <style> tag
+	match := re.FindStringSubmatch(html)
+	if len(match) > 1 {
+		// Return the captured content inside the <style> tag
+		return match[1]
+	}
+
+	// Return an empty string if no match is found
+	return ""
+}
+
+func stripStyleTag(html string) string {
+	// Case-insensitive regex pattern to match style tags and their content
+	pattern := `(?i)<style\b[^>]*>[\s\S]*?</style>`
+
+	// Compile the regex pattern
+	re := regexp.MustCompile(pattern)
+
+	// Replace all matches with empty string
+	result := re.ReplaceAllString(html, "")
+
+	// Trim any extra whitespace that might be left
+	result = strings.TrimSpace(result)
+
+	return result
+}
+
+func InsertStyleTag(html, styleContent string) string {
+	// Find closing </div> tag (assuming it's the last one)
+	lastDivIndex := strings.LastIndex(html, "</div>")
+
+	if lastDivIndex == -1 {
+		// If no </div> found, append to the end
+		return fmt.Sprintf("%s\n<style>%s</style>", html, styleContent)
+	}
+
+	// Format the style tag with proper indentation
+	styleTag := fmt.Sprintf("<style>%s</style>\n", styleContent)
+
+	// Insert the style tag just before the last </div>
+	result := html[:lastDivIndex] + styleTag + html[lastDivIndex:]
+
+	return result
 }
