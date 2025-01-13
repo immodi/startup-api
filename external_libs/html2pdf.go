@@ -132,31 +132,21 @@ func (g *Generator[T]) CapturePDF(browser *rod.Browser, htmlUrl, outputPath stri
 		page.MustWaitLoad().MustEval(g.JavascriptToRun)
 		g.DocumentTitle = page.MustWaitLoad().MustEval(`
 			() => {
-				const canvas = document.querySelector('#canvas');
-				canvas.classList.remove("overflow-y-scroll")
-				const style = document.querySelector('style');
-				style.textContent = "html, body { overflow: none; scrollbar-width: none; -ms-overflow-style: none; } body::-webkit-scrollbar { display: none; } " + style.textContent;
-		
-				const whitespaces = document.querySelectorAll('.whitespace-pre-wrap');
-				whitespaces.forEach(whitespace => whitespace.classList.remove("whitespace-pre-wrap"))
-				
-				return document.querySelector(".title").textContent;
-			}
-		`).String()
-	} else {
-		page.MustWaitLoad().MustEval(g.JavascriptToRun)
-		g.DocumentTitle = page.MustWaitLoad().MustEval(`
-			() => {
-				const canvas = document.querySelector('#canvas');
-				canvas.classList.remove("overflow-y-scroll")
-				const style = document.querySelector('style');
-				style.textContent = "html, body { overflow: none; scrollbar-width: none; -ms-overflow-style: none; } body::-webkit-scrollbar { display: none; } " + style.textContent;
-			
-				const whitespaces = document.querySelectorAll('.whitespace-pre-wrap');
-				whitespaces.forEach(whitespace => whitespace.classList.remove("whitespace-pre-wrap"))
-			}
-		`).String()
+				try {
+					const canvas = document.querySelector("#canvas");
+					canvas.classList.remove("overflow-y-scroll");
+					const style = document.querySelector("style");
+					style.textContent =
+						"html, body { overflow: none; scrollbar-width: none; -ms-overflow-style: none; } body::-webkit-scrollbar { display: none; } " +
+						style.textContent;
 
+					const whitespaces = document.querySelectorAll(".whitespace-pre-wrap");
+					whitespaces.forEach((whitespace) =>
+						whitespace.classList.remove("whitespace-pre-wrap")
+					);
+				} catch (error) {}
+			}
+		`).String()
 	}
 
 	// Generate the PDF after ensuring JavaScript changes have been applied
