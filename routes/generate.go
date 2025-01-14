@@ -47,15 +47,10 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 
 	message, styleTag := MessageBuilder(c, app, request.Topic, request.Template, request.Level)
 
-	// htmlAiResponse := getAIResponse(message)
-	htmlAiResponse, err := GetAiResponse(message)
-	if err != nil {
-		return err
-	}
+	err := getAIResponseAndWriteHTMl(c, app, request.Template, styleTag, InsertStyleTag, message, 3)
 
-	err = lib.WriteResponseHTML(c, app, request.Template, htmlAiResponse, styleTag, InsertStyleTag)
 	if err != nil {
-		return err
+		return responses.PbErrorResponse(c, 500, err.Error())
 	}
 
 	filepath, err := lib.ParsePdfFile(c, app, lib.HtmlParserConfig{
@@ -81,14 +76,22 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 	return err
 }
 
-func getAIResponse(message string) string {
+func getAIResponseAndWriteHTMl(c echo.Context, app *pocketbase.PocketBase, templateName string, styleTag string, insertStyleTag func(string, string) string, message string, tries int) error {
 	response, err := GetAiResponse(message)
 
 	if err != nil {
-		return getAIResponse(message)
+		if tries < 1 {
+			return fmt.Errorf("error in the ai serivce, please try again later")
+		}
+		return getAIResponseAndWriteHTMl(c, app, templateName, styleTag, insertStyleTag, message, tries-1)
 	}
 
-	return response
+	err = lib.WriteResponseHTML(c, app, templateName, response, styleTag, insertStyleTag)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func jsInjectionScript(data *map[string]any) string {
@@ -99,10 +102,8 @@ func jsInjectionScript(data *map[string]any) string {
 		if valueString, ok := value.(string); ok {
 			sb.WriteString(fmt.Sprintf(`
 				try {
-					document.querySelector(".%s").innerHTML = %s;
-				} catch (e) {
-                    console.log(e)
-                }
+					document.querySelector("#%s").innerHTML = %s;
+				} catch (error) {}
 			`, key, strconv.Quote(valueString)))
 		}
 	}
