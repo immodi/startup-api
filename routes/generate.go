@@ -112,13 +112,15 @@ func jsInjectionScript(data *map[string]any) string {
 	return sb.String()
 }
 
-func storeFile(app *pocketbase.PocketBase, filepath string) (string, error) {
+func storeFile(app *pocketbase.PocketBase, userId string, filepath string) (string, error) {
 	collection, err := app.Dao().FindCollectionByNameOrId("files")
 	if err != nil {
 		return "", err
 	}
 
 	record := models.NewRecord(collection)
+	record.Set("owner", userId)
+
 	form := forms.NewRecordUpsert(app, record)
 
 	f1, err := filesystem.NewFileFromPath(filepath)
@@ -156,7 +158,7 @@ func storeUserFile(app *pocketbase.PocketBase, userData UserFile) error {
 		return err
 	}
 
-	fileId, err := storeFile(app, userData.filepath)
+	fileId, err := storeFile(app, user.Id, userData.filepath)
 	if err != nil {
 		return err
 	}
