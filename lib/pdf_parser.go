@@ -44,14 +44,14 @@ func ParsePdfFile(c echo.Context, app *pocketbase.PocketBase, config HtmlParserC
 	}
 
 	// generate pdf
-	err = g.CreatePdf()
+	err = g.WkCreatePdf()
 	if err != nil {
 		fmt.Println(err)
 		return "", fmt.Errorf("couldnt create the pdf please try again")
 	}
 
 	// delete the generated templates and pdf
-	err = g.DeleteFiles()
+	err = g.WkDeleteFiles()
 	if err != nil {
 		return "", fmt.Errorf("couldnt create the pdf please try again")
 	}
