@@ -16,12 +16,9 @@ type HtmlParserConfig struct {
 	JavascriptToRun string
 }
 
-func ParsePdfFile(c echo.Context, app *pocketbase.PocketBase, config HtmlParserConfig) (string, error) {
+func ParsePdfFile(c echo.Context, app *pocketbase.PocketBase, config HtmlParserConfig, outputFileName string) (string, error) {
 	// directory for saving generated data
 	tempDir := "files"
-
-	// the final output
-	mergedPdf := "data.pdf"
 
 	data, err := ReadFileData(config.TemplateName)
 	if err != nil {
@@ -36,11 +33,10 @@ func ParsePdfFile(c echo.Context, app *pocketbase.PocketBase, config HtmlParserC
 	// create a pdf generator
 	g := externallibs.Generator[any]{
 		OutputPath:      tempDir,
-		FinalPdf:        mergedPdf,
+		FinalPdf:        outputFileName,
 		Template:        template,
 		SingleHtmlFile:  true,
 		JavascriptToRun: config.JavascriptToRun,
-		DocumentTitle:   "",
 	}
 
 	// generate pdf
@@ -60,10 +56,11 @@ func ParsePdfFile(c echo.Context, app *pocketbase.PocketBase, config HtmlParserC
 		fmt.Println("'pdfs' dir already exists")
 	}
 
-	clearPdfsDirectory()
+	clearPdfsDirectory("pdfs")
+	clearPdfsDirectory("templates/user_data")
 
-	newFileName := fmt.Sprintf("pdfs/%s.pdf", g.DocumentTitle)
-	os.Rename("data.pdf", newFileName)
+	newFileName := fmt.Sprintf("pdfs/%s.pdf", g.FinalPdf)
+	os.Rename(outputFileName, newFileName)
 
 	return newFileName, nil
 }
@@ -87,9 +84,7 @@ func ReadFileData(fileName string) (string, error) {
 	return string(f), nil
 }
 
-func clearPdfsDirectory() {
-	dir := "pdfs"
-
+func clearPdfsDirectory(dir string) {
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		fmt.Println("Error reading directory:", err)

@@ -10,9 +10,6 @@ import (
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/forms"
-	"github.com/pocketbase/pocketbase/models"
-	"github.com/pocketbase/pocketbase/tools/filesystem"
 )
 
 type MessageRequest struct {
@@ -20,11 +17,6 @@ type MessageRequest struct {
 	Template string         `json:"template" form:"template" binding:"required"`
 	Level    int            `json:"level" form:"level" binding:"required"`
 	Data     map[string]any `json:"data" form:"data"`
-}
-
-type UserFile struct {
-	filepath string
-	token    string
 }
 
 func Generate(c echo.Context, app *pocketbase.PocketBase) error {
@@ -37,6 +29,11 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 		return responses.PbErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 	}
 
+	user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
+	if err != nil {
+		return err
+	}
+
 	if request.Data != nil {
 		javascript = jsInjectionScript(&request.Data)
 	}
@@ -47,25 +44,29 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 
 	message, styleTag := MessageBuilder(c, app, request.Topic, request.Template, request.Level)
 
-	err := getAIResponseAndWriteHTMl(c, app, request.Template, styleTag, InsertStyleTag, message, 3)
+	htmlData := lib.HtmlFileData{
+		UserName:       lib.GenerateUniqueString(user.Username()),
+		TemplateName:   request.Template,
+		HtmlData:       "",
+		StyleTag:       styleTag,
+		InsertStyleTag: InsertStyleTag,
+	}
 
+	htmlFilePath, err := getAIResponseAndWriteHTMl(c, app, &htmlData, message, 3)
 	if err != nil {
 		return responses.PbErrorResponse(c, 500, err.Error())
 	}
 
 	filepath, err := lib.ParsePdfFile(c, app, lib.HtmlParserConfig{
-		TemplateName:    "data.html",
+		TemplateName:    htmlFilePath,
 		JavascriptToRun: javascript,
-	})
+	}, htmlData.UserName)
 
 	if err != nil {
 		return responses.PbErrorResponse(c, 500, err.Error())
 	}
 
-	go storeUserFile(app, UserFile{
-		filepath: filepath,
-		token:    token,
-	})
+	go lib.StoreFile(app, user.Id, filepath)
 
 	filename := strings.SplitAfter(filepath, "/")[1]
 	err = c.Attachment(filepath, filename)
@@ -76,22 +77,28 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 	return err
 }
 
-func getAIResponseAndWriteHTMl(c echo.Context, app *pocketbase.PocketBase, templateName string, styleTag string, insertStyleTag func(string, string) string, message string, tries int) error {
+func getAIResponseAndWriteHTMl(c echo.Context, app *pocketbase.PocketBase, htmlData *lib.HtmlFileData, message string, tries int) (string, error) {
 	response, err := GetAiResponse(message)
 
 	if err != nil {
 		if tries < 1 {
-			return fmt.Errorf("error in the ai serivce, please try again later")
+			return "", fmt.Errorf("error in the ai serivce, please try again later")
 		}
-		return getAIResponseAndWriteHTMl(c, app, templateName, styleTag, insertStyleTag, message, tries-1)
+		return getAIResponseAndWriteHTMl(c, app, htmlData, message, tries-1)
 	}
 
-	err = lib.WriteResponseHTML(c, app, templateName, response, styleTag, insertStyleTag)
+	htmlFilePath, err := lib.WriteResponseHTML(c, app, &lib.HtmlFileData{
+		UserName:       lib.GenerateUniqueString(htmlData.UserName),
+		TemplateName:   htmlData.TemplateName,
+		HtmlData:       response,
+		StyleTag:       htmlData.StyleTag,
+		InsertStyleTag: htmlData.InsertStyleTag,
+	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return htmlFilePath, nil
 }
 
 func jsInjectionScript(data *map[string]any) string {
@@ -110,63 +117,4 @@ func jsInjectionScript(data *map[string]any) string {
 
 	sb.WriteString(`}`)
 	return sb.String()
-}
-
-func storeFile(app *pocketbase.PocketBase, userId string, filepath string) (string, error) {
-	collection, err := app.Dao().FindCollectionByNameOrId("files")
-	if err != nil {
-		return "", err
-	}
-
-	record := models.NewRecord(collection)
-	record.Set("owner", userId)
-
-	form := forms.NewRecordUpsert(app, record)
-
-	f1, err := filesystem.NewFileFromPath(filepath)
-	if err != nil {
-		return "", err
-	}
-
-	form.AddFiles("file", f1)
-
-	if err := form.Submit(); err != nil {
-		return "", err
-	}
-
-	return record.Id, nil
-}
-
-func updateUserRecord(app *pocketbase.PocketBase, user *models.Record, fileId string) error {
-	filesId := user.GetStringSlice("user_files")
-	form := forms.NewRecordUpsert(app, user)
-
-	form.LoadData(map[string]any{
-		"user_files": append(filesId, fileId),
-	})
-
-	if err := form.Submit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func storeUserFile(app *pocketbase.PocketBase, userData UserFile) error {
-	user, err := app.Dao().FindAuthRecordByToken(userData.token, app.Settings().RecordAuthToken.Secret)
-	if err != nil {
-		return err
-	}
-
-	fileId, err := storeFile(app, user.Id, userData.filepath)
-	if err != nil {
-		return err
-	}
-
-	err = updateUserRecord(app, user, fileId)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

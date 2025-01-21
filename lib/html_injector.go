@@ -17,8 +17,16 @@ type Tag struct {
 	TagLength int
 }
 
-func WriteResponseHTML(c echo.Context, app *pocketbase.PocketBase, templateName string, htmlData string, styleTag string, insertStyleTag func(string, string) string) error {
-	htmlData = insertStyleTag(RemoveTrailingFreeText(htmlData), styleTag)
+type HtmlFileData struct {
+	UserName       string
+	TemplateName   string
+	HtmlData       string
+	StyleTag       string
+	InsertStyleTag func(string, string) string
+}
+
+func WriteResponseHTML(c echo.Context, app *pocketbase.PocketBase, htmlData *HtmlFileData) (string, error) {
+	htmlData.HtmlData = htmlData.InsertStyleTag(RemoveTrailingFreeText(htmlData.HtmlData), htmlData.StyleTag)
 
 	localTemplates := make(map[string]string)
 	localTemplates["document"] = "document.html"
@@ -27,19 +35,20 @@ func WriteResponseHTML(c echo.Context, app *pocketbase.PocketBase, templateName 
 	localTemplates["template"] = "template.html"
 
 	var templatePath string
-	if _, ok := localTemplates[templateName]; ok {
-		templatePath = localTemplates[templateName]
+	if _, ok := localTemplates[htmlData.TemplateName]; ok {
+		templatePath = localTemplates[htmlData.TemplateName]
 	} else {
 		templatePath = localTemplates["template"]
 	}
 
 	templateHtml, err := ReadFileData(fmt.Sprintf("templates/%s", templatePath))
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// Create or open a file to write the output
-	file, err := os.Create("data.html")
+	fileName := fmt.Sprintf("templates/user_data/%s.html", htmlData.UserName)
+	file, err := os.Create(fileName)
 	if err != nil {
 		panic(err)
 	}
@@ -55,13 +64,13 @@ func WriteResponseHTML(c echo.Context, app *pocketbase.PocketBase, templateName 
 	err = tmpl.Execute(file, struct {
 		Content template.HTML
 	}{
-		Content: template.HTML(htmlData),
+		Content: template.HTML(htmlData.HtmlData),
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	return nil
+	return fileName, nil
 }
 
 func RemoveTrailingFreeText(htmlData string) string {
