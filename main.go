@@ -1,6 +1,8 @@
 package main
 
-import "immodi/startup/handlers"
+import (
+	"immodi/startup/handlers"
+)
 
 func main() {
 	handlers.PocketBase()

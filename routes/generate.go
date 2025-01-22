@@ -34,6 +34,8 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 		return err
 	}
 
+	go lib.ClearDirectory(fmt.Sprintf("pdfs/%s", user.Username()))
+
 	if request.Data != nil {
 		javascript = jsInjectionScript(&request.Data)
 	}
@@ -45,7 +47,8 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 	message, styleTag := MessageBuilder(c, app, request.Topic, request.Template, request.Level)
 
 	htmlData := lib.HtmlFileData{
-		UserName:       lib.GenerateUniqueString(user.Username()),
+		Username:       user.Username(),
+		UserBlobName:   lib.GenerateUniqueString(user.Username()),
 		TemplateName:   request.Template,
 		HtmlData:       "",
 		StyleTag:       styleTag,
@@ -60,13 +63,16 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 	filepath, err := lib.ParsePdfFile(c, app, lib.HtmlParserConfig{
 		TemplateName:    htmlFilePath,
 		JavascriptToRun: javascript,
-	}, htmlData.UserName)
+		OutputFileName:  htmlData.UserBlobName,
+		Username:        user.Username(),
+	})
 
 	if err != nil {
 		return responses.PbErrorResponse(c, 500, err.Error())
 	}
 
 	go lib.StoreFile(app, user.Id, filepath)
+	go lib.ClearDirectory(fmt.Sprintf("user_data/%s", user.Username()))
 
 	filename := strings.SplitAfter(filepath, "/")[1]
 	err = c.Attachment(filepath, filename)
@@ -88,7 +94,8 @@ func getAIResponseAndWriteHTMl(c echo.Context, app *pocketbase.PocketBase, htmlD
 	}
 
 	htmlFilePath, err := lib.WriteResponseHTML(c, app, &lib.HtmlFileData{
-		UserName:       lib.GenerateUniqueString(htmlData.UserName),
+		Username:       htmlData.Username,
+		UserBlobName:   htmlData.UserBlobName,
 		TemplateName:   htmlData.TemplateName,
 		HtmlData:       response,
 		StyleTag:       htmlData.StyleTag,
@@ -103,18 +110,29 @@ func getAIResponseAndWriteHTMl(c echo.Context, app *pocketbase.PocketBase, htmlD
 
 func jsInjectionScript(data *map[string]any) string {
 	var sb strings.Builder
-	sb.WriteString(`() => {`)
 
+	// Start the event listener for DOMContentLoaded
+	sb.WriteString(`
+		document.addEventListener("DOMContentLoaded", function() {
+	`)
+
+	// Iterate over the map and generate JS code
 	for key, value := range *data {
 		if valueString, ok := value.(string); ok {
 			sb.WriteString(fmt.Sprintf(`
 				try {
 					document.querySelector("#%s").innerHTML = %s;
-				} catch (error) {}
-			`, key, strconv.Quote(valueString)))
+				} catch (error) {
+					console.error("Error updating element #%s:", error);
+				}
+			`, key, strconv.Quote(valueString), key))
 		}
 	}
 
-	sb.WriteString(`}`)
+	// End the event listener
+	sb.WriteString(`
+		});
+	`)
+
 	return sb.String()
 }

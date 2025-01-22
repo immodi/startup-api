@@ -1,8 +1,10 @@
 package lib
 
 import (
+	"embed"
 	"fmt"
 	"html/template"
+	"immodi/startup/repo"
 	"os"
 	"strings"
 
@@ -11,6 +13,9 @@ import (
 	"github.com/russross/blackfriday/v2"
 )
 
+//go:embed templates/*
+var Templates embed.FS
+
 type Tag struct {
 	Index     int
 	Type      bool //`opening:1 - closing:0`
@@ -18,7 +23,8 @@ type Tag struct {
 }
 
 type HtmlFileData struct {
-	UserName       string
+	Username       string
+	UserBlobName   string
 	TemplateName   string
 	HtmlData       string
 	StyleTag       string
@@ -28,36 +34,30 @@ type HtmlFileData struct {
 func WriteResponseHTML(c echo.Context, app *pocketbase.PocketBase, htmlData *HtmlFileData) (string, error) {
 	htmlData.HtmlData = htmlData.InsertStyleTag(RemoveTrailingFreeText(htmlData.HtmlData), htmlData.StyleTag)
 
-	localTemplates := make(map[string]string)
-	localTemplates["document"] = "document.html"
-	localTemplates["report"] = "report.html"
-	localTemplates["paragraph"] = "paragraph.html"
-	localTemplates["template"] = "template.html"
-
-	var templatePath string
-	if _, ok := localTemplates[htmlData.TemplateName]; ok {
-		templatePath = localTemplates[htmlData.TemplateName]
-	} else {
-		templatePath = localTemplates["template"]
-	}
-
-	templateHtml, err := ReadFileData(fmt.Sprintf("templates/%s", templatePath))
+	templateHtml, err := getSourceHtmlContent(c, app, htmlData.TemplateName)
 	if err != nil {
 		return "", err
 	}
 
-	// Create or open a file to write the output
-	fileName := fmt.Sprintf("templates/user_data/%s.html", htmlData.UserName)
+	// Create full directory path first
+	dirPath := fmt.Sprintf("user_data/%s", htmlData.Username)
+	err = os.MkdirAll(dirPath, 0755)
+	if err != nil {
+		return "", err
+	}
+
+	// Then create the file
+	fileName := fmt.Sprintf("%s/%s.html", dirPath, htmlData.UserBlobName)
 	file, err := os.Create(fileName)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	defer file.Close()
 
 	// Create a new template and parse the template string
 	tmpl, err := template.New("page").Parse(templateHtml)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	// Write the template output to the file
@@ -67,7 +67,7 @@ func WriteResponseHTML(c echo.Context, app *pocketbase.PocketBase, htmlData *Htm
 		Content: template.HTML(htmlData.HtmlData),
 	})
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	return fileName, nil
@@ -173,4 +173,33 @@ func insertAtIndex(original string, index int, newContent rune) string {
 
 	// Concatenate the parts with the new content in between
 	return before + string(newContent) + after
+}
+
+func getSourceHtmlContent(c echo.Context, app *pocketbase.PocketBase, userTemplateName string) (string, error) {
+	htmlData, err := repo.GetTemplateSourceContent(c, app, userTemplateName)
+
+	if err != nil {
+		localTemplates := make(map[string]string)
+		localTemplates["document"] = "document.html"
+		localTemplates["report"] = "report.html"
+		localTemplates["paragraph"] = "paragraph.html"
+		localTemplates["template"] = "template.html"
+
+		var templatePath string
+		if _, ok := localTemplates[userTemplateName]; ok {
+			templatePath = localTemplates[userTemplateName]
+		} else {
+			templatePath = localTemplates["template"]
+		}
+
+		templateHtml, err := Templates.ReadFile(fmt.Sprintf("templates/%s", templatePath))
+		if err != nil {
+			return "", err
+		}
+
+		return string(templateHtml), nil
+
+	}
+
+	return htmlData, nil
 }

@@ -14,33 +14,35 @@ import (
 type HtmlParserConfig struct {
 	TemplateName    string
 	JavascriptToRun string
+	OutputFileName  string
+	Username        string
 }
 
-func ParsePdfFile(c echo.Context, app *pocketbase.PocketBase, config HtmlParserConfig, outputFileName string) (string, error) {
+func ParsePdfFile(c echo.Context, app *pocketbase.PocketBase, config HtmlParserConfig) (string, error) {
 	// directory for saving generated data
-	tempDir := "files"
+	tempDir := config.OutputFileName
 
 	data, err := ReadFileData(config.TemplateName)
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	template, err := template.New("name").Parse(data)
 	if err != nil {
-		fmt.Println(err)
+		return "", err
 	}
 
 	// create a pdf generator
 	g := externallibs.Generator[any]{
 		OutputPath:      tempDir,
-		FinalPdf:        outputFileName,
+		FinalPdf:        config.OutputFileName,
 		Template:        template,
 		SingleHtmlFile:  true,
 		JavascriptToRun: config.JavascriptToRun,
 	}
 
 	// generate pdf
-	err = g.WkCreatePdf()
+	err = g.WkCreatePdf(config.Username)
 	if err != nil {
 		fmt.Println(err)
 		return "", fmt.Errorf("couldnt create the pdf please try again")
@@ -52,17 +54,7 @@ func ParsePdfFile(c echo.Context, app *pocketbase.PocketBase, config HtmlParserC
 		return "", fmt.Errorf("couldnt create the pdf please try again")
 	}
 
-	if err := os.Mkdir("pdfs", os.ModePerm); err != nil {
-		fmt.Println("'pdfs' dir already exists")
-	}
-
-	clearPdfsDirectory("pdfs")
-	clearPdfsDirectory("templates/user_data")
-
-	newFileName := fmt.Sprintf("pdfs/%s.pdf", g.FinalPdf)
-	os.Rename(outputFileName, newFileName)
-
-	return newFileName, nil
+	return g.FinalPdf, nil
 }
 
 func ReadHtmlFileDataFromDB(c echo.Context, app *pocketbase.PocketBase, templateName string) (string, error) {
@@ -84,7 +76,7 @@ func ReadFileData(fileName string) (string, error) {
 	return string(f), nil
 }
 
-func clearPdfsDirectory(dir string) {
+func ClearDirectory(dir string) {
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		fmt.Println("Error reading directory:", err)

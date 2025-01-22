@@ -50,3 +50,32 @@ func GetUserTemplateByName(c echo.Context, app *pocketbase.PocketBase, userTempl
 
 	return "", responses.PbErrorResponse(c, http.StatusNotFound, "Template not found")
 }
+
+func GetTemplateSourceContent(c echo.Context, app *pocketbase.PocketBase, userTemplateName string) (string, error) {
+	token := c.Request().Header.Get("Authorization")
+
+	user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
+	if err != nil {
+		return "", responses.PbErrorResponse(c, http.StatusUnauthorized, "User doesn't exist for some reason")
+	}
+
+	templateIds := user.GetStringSlice("user_templates")
+	for _, templateId := range templateIds {
+		template, err := app.Dao().FindRecordById("templates", templateId)
+		if err != nil {
+			break
+		}
+
+		templateSourceId := template.GetString("source_template")
+		templateSource, err := app.Dao().FindRecordById("sources", templateSourceId)
+		if err != nil {
+			return "", responses.PbErrorResponse(c, http.StatusNotFound, "Template not found")
+		}
+
+		if source := templateSource.GetString("content"); source != "" {
+			return source, nil
+		}
+	}
+
+	return "", responses.PbErrorResponse(c, http.StatusNotFound, "Template not found")
+}

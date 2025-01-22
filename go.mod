@@ -4,12 +4,12 @@ go 1.22.2
 
 require (
 	github.com/gin-gonic/gin v1.10.0
-	github.com/go-rod/rod v0.116.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v5 v5.0.0-20230722203903-ec5b858dab61
 	github.com/pdfcpu/pdfcpu v0.8.0
 	github.com/pocketbase/pocketbase v0.22.21
 	github.com/russross/blackfriday/v2 v2.1.0
+	golang.org/x/net v0.28.0 // indirect
 )
 
 require (
@@ -82,17 +82,11 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	github.com/ysmood/fetchup v0.2.3 // indirect
-	github.com/ysmood/goob v0.4.0 // indirect
-	github.com/ysmood/got v0.34.1 // indirect
-	github.com/ysmood/gson v0.7.3 // indirect
-	github.com/ysmood/leakless v0.8.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	gocloud.dev v0.39.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/image v0.19.0 // indirect
-	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/oauth2 v0.22.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.24.0 // indirect
