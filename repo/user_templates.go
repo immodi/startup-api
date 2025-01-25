@@ -2,7 +2,9 @@ package repo
 
 import (
 	"immodi/startup/responses"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
@@ -61,21 +63,27 @@ func GetTemplateSourceContent(c echo.Context, app *pocketbase.PocketBase, userTe
 
 	templateIds := user.GetStringSlice("user_templates")
 	for _, templateId := range templateIds {
+
 		template, err := app.Dao().FindRecordById("templates", templateId)
 		if err != nil {
 			break
 		}
 
-		templateSourceId := template.GetString("source_template")
-		templateSource, err := app.Dao().FindRecordById("sources", templateSourceId)
-		if err != nil {
-			return "", responses.PbErrorResponse(c, http.StatusNotFound, "Template not found")
-		}
+		if template.Get("name") == userTemplateName {
+			templateSourceId := template.GetString("source_template")
+			templateSource, err := app.Dao().FindRecordById("sources", templateSourceId)
+			if err != nil {
+				return "", responses.PbErrorResponse(c, http.StatusNotFound, "Template not found")
+			}
 
-		if source := templateSource.GetString("content"); source != "" {
-			return source, nil
+			if source := templateSource.GetString("content"); source != "" {
+				log.Println(source)
+				return source, nil
+			}
+
 		}
 	}
+	content, _ := os.ReadFile("lib/templates/document.html")
 
-	return "", responses.PbErrorResponse(c, http.StatusNotFound, "Template not found")
+	return string(content), nil
 }

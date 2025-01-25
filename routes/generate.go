@@ -34,6 +34,10 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 		return err
 	}
 
+	if userTokens := user.GetInt("tokens"); userTokens < 1 {
+		return responses.PbErrorResponse(c, 400, "not enough tokens, smh")
+	}
+
 	go lib.ClearDirectory(fmt.Sprintf("pdfs/%s", user.Username()))
 
 	if request.Data != nil {

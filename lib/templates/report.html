@@ -3,61 +3,122 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Research Paper Title</title>
+        <title>Research Title</title>
         <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Arial', sans-serif;
             color: #333;
-            height: 360.25mm;
+            line-height: 1.8;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%; /* Limit width for better readability */
+            height: 100;
+            margin: 0 auto; /* Center the container */
+            background: #fff; /* White background for content */
+            padding: 30px; /* Add padding for spacing */
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 2em;
-            color: #2E073F; /* Custom Color */
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            color: #2E073F; /* Custom color */
+            font-weight: 700; /* Bold for emphasis */
         }
 
         h2 {
-            color: #7A1CAC; /* Custom Color */
+            color: #7A1CAC; /* Custom color */
             border-bottom: 2px solid #EBD3F8; /* Light accent */
-            padding-bottom: 5px;
-            margin-top: 30px;
+            padding-bottom: 10px;
+            margin-top: 40px;
+            font-size: 1.8em;
+            font-weight: 600; /* Semi-bold */
         }
-        
+
         h3 {
-            margin-top: 15px;
+            margin-top: 25px;
+            color: #4A148C; /* Custom color */
+            font-size: 1.5em;
+            font-weight: 500; /* Medium weight */
         }
 
         p {
-            text-indent: 30px;
-            margin-bottom: 15px;
-            line-height: 1.6;
+            text-indent: 30px; /* Indent first line */
+            margin-bottom: 20px; /* Space between paragraphs */
+            color: #555; /* Slightly darker text for readability */
+            line-height: 1.6; /* Improve readability */
+        }
+
+        ul {
+            margin-bottom: 20px; /* Space below lists */
+            padding-left: 40px; /* Indent list items */
+        }
+
+        li {
+            margin-bottom: 10px; /* Space between list items */
+            color: #555; /* Slightly darker text for readability */
+        }
+
+        strong {
+            color: #4A148C; /* Custom color for bold text */
         }
 
         .abstract {
             font-weight: bold;
-            padding: 10px;
+            padding: 15px;
             border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .references {
-            margin-top: 30px;
+            margin-bottom: 30px;
+            background-color: #EBD3F8; /* Light background for abstract */
+            color: #4A148C; /* Custom color */
+            border-left: 5px solid #7A1CAC; /* Accent border */
         }
 
-        /* Apply page break rules to common block-level elements */
-        h1, h2, p, ul, li, div, section {
-            page-break-inside: avoid; 
-            orphans: auto; 
-            widows: auto;  
+        .references {
+            margin-top: 40px; /* Space above references */
+            padding-top: 20px; /* Space inside references */
+            border-top: 2px solid #EBD3F8; /* Light accent */
+        }
+
+        .references h2 {
+            margin-top: 0; /* Remove top margin for references heading */
+        }
+
+        /* Print-specific styles */
+        @media print {
+            body, .container {
+                margin: 0;
+                padding: 0;
+                border-radius: 0; /* Remove rounded corners for print */
+            }
+
+            h1, h2, p, ul, li, div, section {
+                page-break-inside: avoid; /* Prevent splitting across pages */
+                orphans: 3; /* Minimum lines at the bottom of a page */
+                widows: 3; /* Minimum lines at the top of a page */
+            }
+
+            h1 {
+                font-size: 30pt; /* Larger font size for print */
+            }
+
+            .abstract {
+                background-color: transparent; /* Remove background for print */
+                border-left: none; /* Remove border for print */
+            }
         }
     </style>
     </head>
     <body>
-
         <div class="container">
-            {{.Content}}
+            {{.Content}} <!-- Dynamic content goes here -->
         </div>
     </body>
 </html>
