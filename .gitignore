@@ -28,5 +28,6 @@ data.html
 data.pdf
 
 pdfs/
+lib/templates/**
 
 pb_data
