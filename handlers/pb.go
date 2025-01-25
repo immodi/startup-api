@@ -95,6 +95,47 @@ func PocketBase() *pocketbase.PocketBase {
 		return nil
 	})
 
+	app.OnRecordAfterCreateRequest("users").Add(func(e *core.RecordCreateEvent) error {
+		userTemplates := []string{
+			"waxxopaxrgdpkki",
+			"8gnqdsso46yp6pm",
+			"mqcpw4e0qdb0tg6",
+		}
+
+		e.Record.Set("user_templates", userTemplates)
+		e.Record.Set("user_files", []string{})
+		e.Record.Set("tokens", 50)
+		e.Record.Set("current_plan", "kemt0gtyrxjahfh")
+
+		err := app.Dao().Save(e.Record)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	app.OnRecordAfterAuthWithOAuth2Request().Add(func(e *core.RecordAuthWithOAuth2Event) error {
+		if e.IsNewRecord {
+			userTemplates := []string{
+				"waxxopaxrgdpkki",
+				"8gnqdsso46yp6pm",
+				"mqcpw4e0qdb0tg6",
+			}
+			e.Record.Set("user_templates", userTemplates)
+			e.Record.Set("user_files", []string{})
+			e.Record.Set("tokens", 50)
+			e.Record.Set("current_plan", "kemt0gtyrxjahfh")
+
+			err := app.Dao().Save(e.Record)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}
