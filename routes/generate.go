@@ -29,6 +29,19 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 		return responses.PbErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 	}
 
+	if token == "" {
+
+		err := NonAuthedGenerate(c, app, &request, javascript)
+		if err != nil {
+			return responses.PbErrorResponse(c, http.StatusInternalServerError, err.Error())
+		}
+
+		go lib.ClearDirectory(fmt.Sprintf("pdfs/%s", c.RealIP()))
+		go DecrementNonAuthedUserLimit(app, c.RealIP())
+
+		return nil
+	}
+
 	user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
 	if err != nil {
 		return err

@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"fmt"
 	"immodi/startup/responses"
 	"log"
 	"net/http"
@@ -8,10 +9,27 @@ import (
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/models"
 )
 
 func GetUserTemplates(c echo.Context, app *pocketbase.PocketBase) error {
 	token := c.Request().Header.Get("Authorization")
+
+	if token == "" {
+		defaultTemplates := []*models.Record{}
+
+		err := app.Dao().RecordQuery("templates").Limit(3).All(&defaultTemplates)
+		if err != nil {
+			return responses.PbErrorResponse(c, http.StatusUnauthorized, "No Templates avaliable")
+		}
+
+		templates := make([][]string, 0)
+		for _, template := range defaultTemplates {
+			templates = append(templates, []string{template.Id, template.GetString("name")})
+		}
+
+		return c.JSON(http.StatusAccepted, templates)
+	}
 
 	user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
 	if err != nil {
@@ -33,7 +51,7 @@ func GetUserTemplateByName(c echo.Context, app *pocketbase.PocketBase, userTempl
 
 	user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
 	if err != nil {
-		return "", responses.PbErrorResponse(c, http.StatusUnauthorized, "User doesn't exist for some reason")
+		return "", fmt.Errorf("user doesn't exist for some reason")
 	}
 
 	templateIds := user.GetStringSlice("user_templates")
@@ -50,7 +68,7 @@ func GetUserTemplateByName(c echo.Context, app *pocketbase.PocketBase, userTempl
 		}
 	}
 
-	return "", responses.PbErrorResponse(c, http.StatusNotFound, "Template not found")
+	return "", fmt.Errorf("no user template found")
 }
 
 func GetTemplateSourceContent(c echo.Context, app *pocketbase.PocketBase, userTemplateName string) (string, error) {
@@ -58,7 +76,7 @@ func GetTemplateSourceContent(c echo.Context, app *pocketbase.PocketBase, userTe
 
 	user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
 	if err != nil {
-		return "", responses.PbErrorResponse(c, http.StatusUnauthorized, "User doesn't exist for some reason")
+		return "", fmt.Errorf("user doesn't exist for some reason")
 	}
 
 	templateIds := user.GetStringSlice("user_templates")
@@ -73,7 +91,7 @@ func GetTemplateSourceContent(c echo.Context, app *pocketbase.PocketBase, userTe
 			templateSourceId := template.GetString("source_template")
 			templateSource, err := app.Dao().FindRecordById("sources", templateSourceId)
 			if err != nil {
-				return "", responses.PbErrorResponse(c, http.StatusNotFound, "Template not found")
+				return "", fmt.Errorf("template not found")
 			}
 
 			if source := templateSource.GetString("content"); source != "" {

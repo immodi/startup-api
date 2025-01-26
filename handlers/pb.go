@@ -54,7 +54,7 @@ func PocketBase() *pocketbase.PocketBase {
 			},
 			Middlewares: []echo.MiddlewareFunc{
 				apis.ActivityLogger(app),
-				apis.RequireAdminOrRecordAuth("users"),
+				// apis.RequireAdminOrRecordAuth("users"),
 			},
 		})
 
@@ -88,7 +88,7 @@ func PocketBase() *pocketbase.PocketBase {
 			},
 			Middlewares: []echo.MiddlewareFunc{
 				apis.ActivityLogger(app),
-				apis.RequireRecordAuth("users"),
+				// apis.RequireRecordAuth("users"),
 			},
 		})
 
