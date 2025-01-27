@@ -48,6 +48,15 @@ func GetUserTemplates(c echo.Context, app *pocketbase.PocketBase) error {
 
 func GetUserTemplateByName(c echo.Context, app *pocketbase.PocketBase, userTemplateName string) (string, error) {
 	token := c.Request().Header.Get("Authorization")
+	if token == "" {
+		template, err := app.Dao().FindFirstRecordByData("templates", "name", userTemplateName)
+		if err != nil {
+			return "", err
+		}
+
+		htmlData := template.GetString("html")
+		return htmlData, nil
+	}
 
 	user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
 	if err != nil {
@@ -73,6 +82,16 @@ func GetUserTemplateByName(c echo.Context, app *pocketbase.PocketBase, userTempl
 
 func GetTemplateSourceContent(c echo.Context, app *pocketbase.PocketBase, userTemplateName string) (string, error) {
 	token := c.Request().Header.Get("Authorization")
+
+	if token == "" {
+		templateSource, err := app.Dao().FindFirstRecordByData("sources", "name", userTemplateName)
+		if err != nil {
+			return "", err
+		}
+
+		source := templateSource.GetString("content")
+		return source, nil
+	}
 
 	user, err := app.Dao().FindAuthRecordByToken(token, app.Settings().RecordAuthToken.Secret)
 	if err != nil {

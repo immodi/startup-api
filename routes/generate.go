@@ -30,7 +30,6 @@ func Generate(c echo.Context, app *pocketbase.PocketBase) error {
 	}
 
 	if token == "" {
-
 		err := NonAuthedGenerate(c, app, &request, javascript)
 		if err != nil {
 			return responses.PbErrorResponse(c, http.StatusInternalServerError, err.Error())

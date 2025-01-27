@@ -3,6 +3,7 @@ package routes
 import (
 	"fmt"
 	"immodi/startup/lib"
+	"os"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
@@ -12,7 +13,19 @@ import (
 func NonAuthedGenerate(c echo.Context, app *pocketbase.PocketBase, request *MessageRequest, javascript string) error {
 	nonAuthUser, err := app.Dao().FindFirstRecordByData("no_auth_users", "user_ip", c.RealIP())
 	if err != nil {
-		return fmt.Errorf("an error has ocurred")
+		collection, err := app.Dao().FindCollectionByNameOrId("no_auth_users")
+		if err != nil {
+			return err
+		}
+
+		nonAuthUser = models.NewRecord(collection)
+
+		nonAuthUser.Set("user_ip", c.RealIP())
+		nonAuthUser.Set("generations", 10)
+		err = app.Dao().Save(nonAuthUser)
+		if err != nil {
+			return err
+		}
 	}
 
 	if nonAuthUser != nil && nonAuthUser.GetInt("generations") <= 0 {
@@ -40,6 +53,7 @@ func NonAuthedGenerate(c echo.Context, app *pocketbase.PocketBase, request *Mess
 
 	htmlFilePath, err := getAIResponseAndWriteHTMl(c, app, &htmlData, message, 3)
 	if err != nil {
+		go os.RemoveAll(htmlData.UserBlobName)
 		return fmt.Errorf("error writing the html")
 	}
 
@@ -51,10 +65,11 @@ func NonAuthedGenerate(c echo.Context, app *pocketbase.PocketBase, request *Mess
 	})
 
 	if err != nil {
+		go os.RemoveAll(htmlData.UserBlobName)
 		return fmt.Errorf("error parsing the pdf file")
 	}
 
-	go lib.ClearDirectory(fmt.Sprintf("user_data/%s", c.RealIP()))
+	go os.RemoveAll(fmt.Sprintf("user_data/%s", c.RealIP()))
 
 	err = c.Attachment(filepath, "file.pdf")
 	if err != nil {
@@ -67,6 +82,21 @@ func NonAuthedGenerate(c echo.Context, app *pocketbase.PocketBase, request *Mess
 func DecrementNonAuthedUserLimit(app *pocketbase.PocketBase, userIp string) error {
 	record, err := app.Dao().FindFirstRecordByData("no_auth_users", "user_ip", userIp)
 	if err != nil {
+		CreateNonAuthedUser(app, userIp, record)
+	}
+
+	record.Set("generations", record.GetInt("generations")-1)
+
+	err = app.Dao().Save(record)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateNonAuthedUser(app *pocketbase.PocketBase, userIp string, record *models.Record) error {
+	if record == nil {
 		collection, err := app.Dao().FindCollectionByNameOrId("no_auth_users")
 		if err != nil {
 			return err
@@ -76,13 +106,6 @@ func DecrementNonAuthedUserLimit(app *pocketbase.PocketBase, userIp string) erro
 
 		record.Set("user_ip", userIp)
 		record.Set("generations", 10)
-	}
-
-	record.Set("generations", record.GetInt("generations")-1)
-
-	err = app.Dao().Save(record)
-	if err != nil {
-		return err
 	}
 
 	return nil
